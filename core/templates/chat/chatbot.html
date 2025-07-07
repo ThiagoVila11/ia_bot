@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot com Voz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+    <div class="max-w-2xl mx-auto w-full flex flex-col h-full">
+        <h1 class="text-2xl font-bold text-center py-4 bg-blue-600 text-white rounded-t-lg">🤖 Chatbot com Voz</h1>
+
+        <div id="chat" class="flex-1 overflow-y-auto p-4 bg-white border rounded-b-lg">
+            {% for msg in mensagens %}
+                <div class="mb-2 flex {% if msg.enviado_por_usuario %}justify-end{% else %}justify-start{% endif %}">
+                    <div class="{% if msg.enviado_por_usuario %}bg-blue-500 text-white{% else %}bg-gray-300 text-black{% endif %} px-4 py-2 rounded-lg max-w-[70%]">
+                        {{ msg.texto }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form id="chat-form" method="POST" class="flex items-center p-4 bg-white border-t">
+            {% csrf_token %}
+            <input type="text" id="mensagem" name="mensagem" placeholder="Fale ou digite sua mensagem..." class="flex-1 border rounded-lg p-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <button type="button" id="btn-voz" onclick="iniciarReconhecimento()" class="mr-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg" title="Falar (ou pressione espaço)">
+                🎤
+            </button>
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg mr-2">Enviar</button>
+        </form>
+
+        <form method="POST" action="{% url 'limpar_historico' %}" class="p-4 bg-white border-t flex justify-center">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🗑️ Limpar Histórico</button>
+        </form>
+    </div>
+
+    <!-- JavaScript Reconhecimento de Voz -->
+    <script>
+        const campo = document.getElementById("mensagem");
+        const formulario = document.getElementById("chat-form");
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = "pt-BR";
+            recognition.continuous = true; // Reconhecimento contínuo
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = function(event) {
+                const resultado = event.results[event.results.length - 1][0].transcript.trim();
+                campo.value = resultado;
+
+                // Envio automático após reconhecimento
+                setTimeout(() => {
+                    formulario.submit();
+                }, 500);
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Erro no reconhecimento de voz:", event.error);
+                alert("Erro no reconhecimento de voz: " + event.error);
+            };
+        }
+
+        function iniciarReconhecimento() {
+            if (!recognition) {
+                alert("Seu navegador não suporta reconhecimento de voz.");
+                return;
+            }
+
+            recognition.stop(); // Para reiniciar sempre que clicar
+            recognition.start();
+        }
+
+        // Atalho de teclado: pressionar espaço ativa o microfone
+        document.addEventListener("keydown", function(e) {
+            if (e.code === "Space" && document.activeElement !== campo) {
+                e.preventDefault();
+                iniciarReconhecimento();
+            }
+        });
+    </script>
+</body>
+</html>
