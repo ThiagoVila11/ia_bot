@@ -63,6 +63,7 @@ def responder_pergunta(request):
         system_prompt = (
             "Você é um atendente da empresa Vila11 e responde perguntas sobre contratos, aluguéis e documentos. "
             "Responda com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão."
+            "Formate o texto com quebras de linha e parágrafos, se necessário."
         )
 
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -96,50 +97,66 @@ def chatbot(request):
             # Salva a mensagem do usuário
             Mensagem.objects.create(texto=texto_usuario, enviado_por_usuario=True)
 
-            try:
-                # Verifica índice FAISS
-                vector_dir = "vector_index"
-                if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
-                    resposta_texto = "Erro: índice de conhecimento não encontrado."
-                else:
-                    # Carrega embeddings e índice FAISS
-                    embeddings = OpenAIEmbeddings()
-                    db = FAISS.load_local(
-                        vector_dir,
-                        embeddings,
-                        allow_dangerous_deserialization=True
-                    )
+            # Checa se é a primeira vez (sem mensagens no banco)
+            print(Mensagem.objects.count())
+            if Mensagem.objects.count() == 1:
+                Mensagem.objects.create(texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False)
+                Mensagem.objects.create(texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False)
+                Mensagem.objects.create(texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False)
+                Mensagem.objects.create(texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False)
+                Mensagem.objects.create(texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False)
+            elif Mensagem.objects.count() == 7:
+                Mensagem.objects.create(texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False)
+            elif Mensagem.objects.count() == 9:
+                Mensagem.objects.create(texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
+            else:
 
-                    # Busca contexto
-                    docs = db.similarity_search(texto_usuario, k=3)
-                    contexto = "\n\n".join([doc.page_content for doc in docs])
+                try:
+                    # Verifica índice FAISS
+                    vector_dir = "vector_index"
+                    if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
+                        resposta_texto = "Erro: índice de conhecimento não encontrado."
+                    else:
+                        # Carrega embeddings e índice FAISS
+                        embeddings = OpenAIEmbeddings()
+                        db = FAISS.load_local(
+                            vector_dir,
+                            embeddings,
+                            allow_dangerous_deserialization=True
+                        )
 
-                    # Prompt
-                    system_prompt = (
-                        "Você é um atendente da empresa Vila11 e responde perguntas sobre contratos, aluguéis e documentos. "
-                        "Responda com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão."
-                    )
+                        # Busca contexto
+                        docs = db.similarity_search(texto_usuario, k=3)
+                        contexto = "\n\n".join([doc.page_content for doc in docs])
 
-                    # Chamada à OpenAI (nova API)
-                    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": f"Contexto:\n{contexto}"},
-                            {"role": "user", "content": texto_usuario}
-                        ]
-                    )
-                    resposta_texto = response.choices[0].message.content
+                        # Prompt
+                        system_prompt = (
+                            "Você é um atendente da empresa Vila11 e responde perguntas sobre contratos, aluguéis e documentos. "
+                            "Responda com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão."
+                        )
 
-            except Exception as e:
-                resposta_texto = f"Erro ao gerar resposta: {str(e)}"
+                        # Chamada à OpenAI
+                        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                        response = client.chat.completions.create(
+                            model="gpt-4",
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": f"Contexto:\n{contexto}"},
+                                {"role": "user", "content": texto_usuario}
+                            ]
+                        )
+                        resposta_texto = response.choices[0].message.content
 
-            # Salva resposta do bot
-            Mensagem.objects.create(texto=resposta_texto, enviado_por_usuario=False)
+                except Exception as e:
+                    resposta_texto = f"Erro ao gerar resposta: {str(e)}"
+
+                # Salva resposta do bot
+                Mensagem.objects.create(texto=resposta_texto, enviado_por_usuario=False)
+
 
     mensagens = Mensagem.objects.order_by('timestamp')
     return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
+
 
 @csrf_exempt
 def limpar_historico(request):

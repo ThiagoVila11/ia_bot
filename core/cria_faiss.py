@@ -1,16 +1,22 @@
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import os
 
-# Carregar chave da API
+# Carregar chave da API do arquivo .env
 from dotenv import load_dotenv
 load_dotenv()
 openai_key = os.getenv("OPENAI_API_KEY")
 
-# 1. Carregar os arquivos ou textos
-loader = TextLoader("meu_arquivo.txt", encoding="utf-8")  # ou use PDFLoader, etc.
+# 1. Carregar todos os arquivos .txt do diretório
+loader = DirectoryLoader(
+    path="meus_arquivos",             # pasta onde estão os arquivos
+    glob="**/*.txt",                  # busca recursiva por arquivos .txt
+    loader_cls=TextLoader,
+    loader_kwargs={'encoding': 'utf-8'}
+)
+
 documents = loader.load()
 
 # 2. Quebrar em partes menores (chunks)
@@ -26,4 +32,4 @@ db = FAISS.from_documents(docs, embeddings)
 # 5. Salvar o índice em disco
 db.save_local("vector_index")
 
-print("Índice FAISS criado e salvo com sucesso!")
+print("✅ Índice FAISS criado e salvo com sucesso com múltiplos arquivos!")
