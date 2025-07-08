@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from dotenv import load_dotenv
@@ -15,10 +16,13 @@ from openai import OpenAI
 from django.shortcuts import redirect
 
 
-load_dotenv()  # Carrega variáveis do .env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+print(f"Carregando variáveis de ambiente do arquivo iews: {env_path}")
+load_dotenv(dotenv_path=env_path, override=True)
 
 # Instancia embeddings uma única vez
 openai_key = os.getenv("OPENAI_API_KEY")
+print(openai_key)
 if not openai_key:
     raise EnvironmentError("OPENAI_API_KEY não está definido no ambiente ou .env")
 

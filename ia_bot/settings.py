@@ -2,7 +2,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # ← carrega variáveis do .env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+print(f"Carregando variáveis de ambiente do arquivo settings: {env_path}")
+load_dotenv(dotenv_path=env_path, override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
