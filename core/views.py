@@ -224,19 +224,48 @@ def parametro_create(request):
 @csrf_exempt
 def parametro_update(request, pk):
     parametro = get_object_or_404(Parametro, pk=pk)
+
     if request.method == 'POST':
-        form = ParametroForm(request.POST, instance=parametro)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'JSON inválido'}, status=400)
+
+        form = ParametroForm(data, instance=parametro)
         if form.is_valid():
-            form.save()
-            return redirect('parametro_list')
+            parametro = form.save()
+            return JsonResponse({
+                'success': True,
+                'parametro': {
+                    'id': parametro.id,
+                    'chave': parametro.chave,
+                    'valor': parametro.valor
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
     else:
-        form = ParametroForm(instance=parametro)
-    return render(request, 'parametros/parametro_form.html', {'form': form})
+        return JsonResponse({
+            'id': parametro.id,
+            'chave': parametro.chave,
+            'valor': parametro.valor
+        })
 
 @csrf_exempt
 def parametro_delete(request, pk):
     parametro = get_object_or_404(Parametro, pk=pk)
+
     if request.method == 'POST':
         parametro.delete()
-        return redirect('parametro_list')
-    return render(request, 'parametros/parametro_confirm_delete.html', {'parametro': parametro})
+        return JsonResponse({
+            'success': True,
+            'message': f"Parâmetro '{parametro.chave}' excluído com sucesso."
+        })
+
+    # Para requisição GET, apenas retorna os dados do parâmetro
+    return JsonResponse({
+        'id': parametro.id,
+        'chave': parametro.chave,
+        'valor': parametro.valor
+    })
