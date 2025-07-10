@@ -54,8 +54,12 @@ def responder_pergunta(request):
         vector_dir = "vector_index"
         if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
             return JsonResponse({"erro": "Índice FAISS não encontrado"}, status=500)
-
-        embeddings = OpenAIEmbeddings()
+        
+        try:
+            openai_key = Parametro.objects.get(parametroChave='OPENAI_API_KEY').parametroValor
+        except Parametro.DoesNotExist:
+            raise EnvironmentError("Parâmetro OPENAI_API_KEY não encontrado no banco de dados.")
+        embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
         db = FAISS.load_local(
             vector_dir,
             embeddings,
@@ -133,7 +137,11 @@ def chatbot(request):
                     else:
                         # Carrega embeddings e índice FAISS
                         print("Carregando embeddings e índice FAISS...")
-                        embeddings = OpenAIEmbeddings()
+                        try:
+                            openai_key = Parametro.objects.get(parametroChave='OPENAI_API_KEY').parametroValor
+                        except Parametro.DoesNotExist:
+                            raise EnvironmentError("Parâmetro OPENAI_API_KEY não encontrado no banco de dados.")
+                        embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
                         db = FAISS.load_local(
                             vector_dir,
                             embeddings,
