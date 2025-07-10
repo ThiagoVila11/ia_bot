@@ -176,6 +176,7 @@ def chatbot(request):
                             Se o cliente falar que o valor esta alto ou muito caro, estimule ele falar qual é o seu orçamento  e ofereça unidades com valor mais aderente ao orçamento do cliente.
                             Responda as informações sobre a Vila 11 e locação com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão.
                             Informações sobre pontos de interesse, como terminais de metro, trem, onibus, aeroportos, escolas, hospitais, supermercados, farmácias, padarias, academias e parques, podem ser respondidas com informações fora do conteúdo abaixo.
+                            Estimule sempre o cliente falar o que ele precisa, localização, quantidade de dormitórios, se vai mudar imediato ou em data futura.
                             """
                         )
                         print(system_prompt)
