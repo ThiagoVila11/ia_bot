@@ -196,8 +196,8 @@ def limpar_historico(request):
 
 @csrf_exempt
 def parametro_list(request):
-    parametros = Parametro.objects.all()
-    return render(request, 'parametros/parametro_list.html', {'parametros': parametros})
+    parametros = Parametro.objects.all().values('id', 'parametroChave', 'parametroValor')  # ou fields conforme seu modelo
+    return JsonResponse(list(parametros), safe=False)
 
 @csrf_exempt
 def parametro_create(request):
