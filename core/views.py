@@ -238,8 +238,8 @@ def parametro_update(request, pk):
                 'success': True,
                 'parametro': {
                     'id': parametro.id,
-                    'chave': parametro.chave,
-                    'valor': parametro.valor
+                    'chave': parametro.parametroChave,
+                    'valor': parametro.parametroValor
                 }
             })
         else:
@@ -248,8 +248,8 @@ def parametro_update(request, pk):
     else:
         return JsonResponse({
             'id': parametro.id,
-            'chave': parametro.chave,
-            'valor': parametro.valor
+            'chave': parametro.parametroChave,
+            'valor': parametro.parametroValor
         })
 
 @csrf_exempt
@@ -260,12 +260,12 @@ def parametro_delete(request, pk):
         parametro.delete()
         return JsonResponse({
             'success': True,
-            'message': f"Parâmetro '{parametro.chave}' excluído com sucesso."
+            'message': f"Parâmetro '{parametro.parametroChave}' excluído com sucesso."
         })
 
     # Para requisição GET, apenas retorna os dados do parâmetro
     return JsonResponse({
         'id': parametro.id,
-        'chave': parametro.chave,
-        'valor': parametro.valor
+        'chave': parametro.parametroChave,
+        'valor': parametro.parametroValor
     })
