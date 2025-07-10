@@ -2,11 +2,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-print(f"Carregando variáveis de ambiente do arquivo settings: {env_path}")
-load_dotenv(dotenv_path=env_path, override=True)
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+#env_path = Path(__file__).resolve().parent.parent / ".env"
+#print(f"Carregando variáveis de ambiente do arquivo settings: {env_path}")
+#load_dotenv(dotenv_path=env_path)
+
+#OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

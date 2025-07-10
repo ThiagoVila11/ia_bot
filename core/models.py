@@ -21,7 +21,7 @@ class Parametro(models.Model):
     parametroValor = models.TextField()
 
     def __str__(self):
-        return f"{self.chave}: {self.valor[:50]}..."
+        return f"{self.parametroChave}: {self.parametroValor[:50]}..."
 
     class Meta:
         verbose_name = "Parâmetro"

@@ -1,35 +1,47 @@
+import sys
+from pathlib import Path
+import os
+import django
+
+# 1. Adiciona o diretório do projeto ao PYTHONPATH
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
+
+# 2. Configura Django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ia_bot.settings")
+django.setup()
+
+# 3. Agora pode importar modelos e bibliotecas
+from core.models import Parametro
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-import os
 
-# Carregar chave da API do arquivo .env
-from dotenv import load_dotenv
-load_dotenv()
-openai_key = os.getenv("OPENAI_API_KEY")
+# 4. Busca chave da OpenAI do banco
+try:
+    openai_key = Parametro.objects.get(parametroChave='OPENAI_API_KEY').parametroValor
+except Parametro.DoesNotExist:
+    raise EnvironmentError("Parâmetro OPENAI_API_KEY não encontrado no banco de dados.")
 
-# 1. Carregar todos os arquivos .txt do diretório
+print(f"🔑 Chave OpenAI: {openai_key}")
+
+# 5. Carrega arquivos
 loader = DirectoryLoader(
-    path="meus_arquivos",             # pasta onde estão os arquivos
-    glob="**/*.txt",                  # busca recursiva por arquivos .txt
+    path="meus_arquivos",
+    glob="**/*.txt",
     loader_cls=TextLoader,
     loader_kwargs={'encoding': 'utf-8'}
 )
-
 documents = loader.load()
 
-# 2. Quebrar em partes menores (chunks)
+# 6. Split
 splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 docs = splitter.split_documents(documents)
 
-# 3. Gerar embeddings
+# 7. Embeddings + FAISS
 embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-
-# 4. Criar o índice FAISS
 db = FAISS.from_documents(docs, embeddings)
-
-# 5. Salvar o índice em disco
 db.save_local("vector_index")
 
-print("✅ Índice FAISS criado e salvo com sucesso com múltiplos arquivos!")
+print("✅ Índice FAISS criado e salvo com sucesso!")
