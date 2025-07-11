@@ -155,6 +155,14 @@ def chatbot(request):
                                         "Formate o texto com quebras de linha e parágrafos, se necessário."
                                         "Responda de forma clara e objetiva, evitando jargões técnicos desnecessários.
                                         Se a pergunta for sobre quais unidades estão disponíveis, e você encontrar essa informação no texto, liste os nomes e endereços.
+                                        Sempre que o usuário quiser falar com um humano ou falar com um atendente, retorne apenas: "Atendimento Humano".
+                                        Sempre que o usuário quiser agendar uma visita, retorne apenas: "Atendimento Humano".
+                                        Sempre que o usuário quiser falar com um corretor, retorne apenas: "Atendimento Humano".
+                                        Sempre que o usuário quiser encerrar a conversa, sair ou finalizar, retorne apenas: "encerrar conversa".
+                                        Quando o cliente quiser mudar de idioma no meio da conversa, seja aderente ao idioma solicitado.
+                                        Não ofereça serviços ou comodidades que não estejam na base de conhecimento.
+                                        Não fornecer informações de valores e preços, somente quando o cliente perguntar.
+                                        Se o cliente falar que o valor esta alto ou muito caro, estimule ele falar qual é o seu orçamento  e ofereça unidades com valor mais aderente ao orçamento do cliente.
                                         Conteúdo base:
                                         {contexto}
                                         """
