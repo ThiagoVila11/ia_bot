@@ -4,6 +4,8 @@ class Mensagem(models.Model):
     texto = models.TextField()
     enviado_por_usuario = models.BooleanField(default=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    session_id = models.CharField(max_length=100, default="", blank=None)  # novo campo
+
 
 class Contexto(models.Model):
     contextoConteudo = models.TextField()

@@ -106,24 +106,31 @@ def responder_pergunta(request):
     
 
 def chatbot(request):
+    if not request.session.session_key:
+        request.session.save()  # garante que a sessão seja criada
+
+    session_id = request.session.session_key
+    print(f"ID da sessão: {session_id}")
     if request.method == 'POST':
         print("Recebendo mensagem do usuário...")
         texto_usuario = request.POST.get('mensagem')
         if texto_usuario:
             # Salva a mensagem do usuário
-            Mensagem.objects.create(texto=texto_usuario, enviado_por_usuario=True)
+            #Mensagem.objects.create(texto=texto_usuario, enviado_por_usuario=True)
+            Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True)
+
 
             # Checa se é a primeira vez (sem mensagens no banco)
-            if Mensagem.objects.count() == 1:
-                Mensagem.objects.create(texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False)
-                Mensagem.objects.create(texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False)
-                Mensagem.objects.create(texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False)
-                Mensagem.objects.create(texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False)
-                Mensagem.objects.create(texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False)
-            elif Mensagem.objects.count() == 7:
-                Mensagem.objects.create(texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False)
-            elif Mensagem.objects.count() == 9:
-                Mensagem.objects.create(texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
+            if Mensagem.objects.filter(session_id=session_id).count() == 1:
+                Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False)
+                Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False)
+                Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False)
+                Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False)
+                Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False)
+            elif Mensagem.objects.filter(session_id=session_id).count() == 7:
+                Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False)
+            elif Mensagem.objects.filter(session_id=session_id).count() == 9:
+                Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
             else:
                 try:
                     print("Verificando índice FAISS...")
@@ -199,17 +206,22 @@ def chatbot(request):
                 except Exception as e:
                     resposta_texto = f"Erro ao gerar resposta: {str(e)}"
 
-                Mensagem.objects.create(texto=resposta_texto, enviado_por_usuario=False)
+                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False)
 
 
-    mensagens = Mensagem.objects.order_by('timestamp')
+    #mensagens = Mensagem.objects.order_by('timestamp')
+    mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+    print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
     return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
 
 
 @csrf_exempt
 def limpar_historico(request):
     if request.method == 'POST':
-        Mensagem.objects.all().delete()
+        if not request.session.session_key:
+            request.session.save()
+        session_id = request.session.session_key
+        Mensagem.objects.filter(session_id=session_id).delete()
     return redirect('chatbot')
 
 
