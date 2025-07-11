@@ -194,7 +194,7 @@ RESPONSABILIDADE DE FORMATO E TOM:
                         historico = [{"role": "system", "content": system_prompt}]
 
                         # Trunca para as últimas 15 interações (opcional)
-                        for msg in list(mensagens_anteriores)[-15:]:
+                        for msg in list(mensagens_anteriores)[-3:]:
                             historico.append({
                                 "role": "user" if msg.enviado_por_usuario else "assistant",
                                 "content": msg.texto
@@ -206,8 +206,8 @@ RESPONSABILIDADE DE FORMATO E TOM:
                         # Envio para OpenAI
                         response = client.chat.completions.create(
                             model="gpt-4",
-                            messages=historico
-                            #temperature=0.5,
+                            messages=historico,
+                            temperature=0.5,
                             #top_p=0.9,
                             #max_tokens=150,
                             #frequency_penalty=0.3,
