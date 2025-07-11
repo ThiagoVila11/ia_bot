@@ -110,9 +110,9 @@ def chatbot(request):
         request.session.save()  # garante que a sessão seja criada
 
     session_id = request.session.session_key
-    print(f"ID da sessão: {session_id}")
+    #print(f"ID da sessão: {session_id}")
     if request.method == 'POST':
-        print("Recebendo mensagem do usuário...")
+        #print("Recebendo mensagem do usuário...")
         texto_usuario = request.POST.get('mensagem')
         if texto_usuario:
             # Salva a mensagem do usuário
@@ -133,12 +133,12 @@ def chatbot(request):
                 Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
             else:
                 try:
-                    print("Verificando índice FAISS...")
+                    #print("Verificando índice FAISS...")
                     vector_dir = "vector_index"
                     if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
                         resposta_texto = "Erro: índice de conhecimento não encontrado."
                     else:
-                        print("Carregando embeddings e índice FAISS...")
+                        #print("Carregando embeddings e índice FAISS...")
                         openai_key = get_openai_key()
                         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
                         db = FAISS.load_local(
@@ -146,14 +146,8 @@ def chatbot(request):
                             embeddings,
                             allow_dangerous_deserialization=True
                         )
-                        print("Índice FAISS carregado com sucesso.")
-
-                        print("Buscando contexto relevante...")
-                        print(f"Texto do usuário: {texto_usuario}")
                         docs = db.similarity_search(texto_usuario, k=3)
-                        print(f"Documentos encontrados: {len(docs)}")
                         contexto = "\n\n".join([doc.page_content for doc in docs])
-                        print(f"Contexto encontrado com sucesso.: {contexto}")
 
                         system_prompt = (
     f"""Você é um assistente comercial da Vila 11 que tem como objetivo falar sobre os apartamentos para locação que temos disponíveis."
@@ -193,12 +187,8 @@ RESPONSABILIDADE DE FORMATO E TOM:
 """
 )
 
-                        print(system_prompt)
-
-                        print(f"Chave OpenAI usada: {openai_key}")
                         client = OpenAI(api_key=openai_key)
 
-                        print("Gerando resposta com OpenAI...")
                         # Histórico da sessão atual
                         mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
                         historico = [{"role": "system", "content": system_prompt}]
@@ -216,16 +206,16 @@ RESPONSABILIDADE DE FORMATO E TOM:
                         # Envio para OpenAI
                         response = client.chat.completions.create(
                             model="gpt-4",
-                            messages=historico,
-                            temperature=0.5,
-                            top_p=0.9,
-                            max_tokens=150,
-                            frequency_penalty=0.3,
-                            presence_penalty=0.2
+                            messages=historico
+                            #temperature=0.5,
+                            #top_p=0.9,
+                            #max_tokens=150,
+                            #frequency_penalty=0.3,
+                            #presence_penalty=0.2
                         )
                         resposta_texto = response.choices[0].message.content
 
-                        print(f"Resposta gerada com sucesso.: {resposta_texto}")
+                        #print(f"Resposta gerada com sucesso.: {resposta_texto}")
 
                 except Exception as e:
                     resposta_texto = f"Erro ao gerar resposta: {str(e)}"
