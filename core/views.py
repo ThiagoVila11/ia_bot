@@ -118,18 +118,18 @@ def chatbot(request):
             # Salva a mensagem do usuário
             #Mensagem.objects.create(texto=texto_usuario, enviado_por_usuario=True)
             Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True)
-
+            user_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
 
             # Checa se é a primeira vez (sem mensagens no banco)
-            if Mensagem.objects.filter(session_id=session_id).count() == 1:
+            if user_messages == 1: #Mensagem.objects.filter(session_id=session_id).count() == 1:
                 Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False)
                 Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False)
                 Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False)
                 Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False)
                 Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False)
-            elif Mensagem.objects.filter(session_id=session_id).count() == 7:
+            elif user_messages == 2: #Mensagem.objects.filter(session_id=session_id).count() == 7:
                 Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False)
-            elif Mensagem.objects.filter(session_id=session_id).count() == 9:
+            elif user_messages == 3: #Mensagem.objects.filter(session_id=session_id).count() == 9:
                 Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
             else:
                 try:
