@@ -21,6 +21,11 @@
             {% endfor %}
         </div>
 
+        <!-- Indicador de carregamento -->
+        <div id="loading-indicator" class="hidden text-center text-gray-600 py-2">
+            ⏳ Processando resposta...
+        </div>
+
         <form id="chat-form" method="POST" class="flex items-center p-4 bg-white border-t">
             {% csrf_token %}
             <input type="text" id="mensagem" name="mensagem" placeholder="Fale ou digite sua mensagem..." class="flex-1 border rounded-lg p-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -42,6 +47,7 @@
     <script>
         const campo = document.getElementById("mensagem");
         const formulario = document.getElementById("chat-form");
+        const loadingIndicator = document.getElementById("loading-indicator");
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
@@ -57,8 +63,8 @@
                 const resultado = event.results[event.results.length - 1][0].transcript.trim();
                 campo.value = resultado;
 
-                // Envio automático após reconhecimento
                 setTimeout(() => {
+                    loadingIndicator.classList.remove("hidden");
                     formulario.submit();
                 }, 500);
             };
@@ -75,16 +81,20 @@
                 return;
             }
 
-            recognition.stop(); // Reinicia se estiver ouvindo
+            recognition.stop();
             recognition.start();
         }
 
-        // Atalho: espaço ativa microfone
         document.addEventListener("keydown", function(e) {
             if (e.code === "Space" && document.activeElement !== campo) {
                 e.preventDefault();
                 iniciarReconhecimento();
             }
+        });
+
+        // Mostra indicador de carregamento ao enviar
+        formulario.addEventListener("submit", function () {
+            loadingIndicator.classList.remove("hidden");
         });
     </script>
 
