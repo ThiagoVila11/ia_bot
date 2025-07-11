@@ -16,7 +16,7 @@ from openai import OpenAI
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Parametro
-from .forms import ParametroForm
+from .forms import ParametroForm, MensagemForm, ContextoForm
 
 
 def get_openai_key():
@@ -156,51 +156,77 @@ def chatbot(request):
                         print(f"Contexto encontrado com sucesso.: {contexto}")
 
                         system_prompt = (
-                            f"""Você é um assistente comercial da Vila 11 que tem como objetivo falar sobre os apartamentos para locação que temos disponíveis."
-                            Sempre que o usuário quiser falar com um humano ou falar com um atendente, retorne apenas: "Atendimento Humano".
-                            Sempre que o usuário quiser agendar uma visita, retorne apenas: "Atendimento Humano".
-                            Sempre que o usuário quiser falar com um corretor, retorne apenas: "Atendimento Humano".
-                            Sempre que o usuário quiser encerrar a conversa, sair ou finalizar, retorne apenas: "encerrar conversa".
-                            Caso você não saiba falar sobre algum assunto, retorne apenas: "Desculpe, não consigo falar sobre esses assuntos."
-                            Você apenas deve falar sobre a Vila 11 e seus apartamentos para locação.
-                            documentos
-                            Não ofereça serviços ou comodidades que não estejam na base de conhecimento.
-                            Não temos o preço nem a disponibilidade de apartamentos em nosso site portanto não fale.
-                            Para valores, usar sempre a base de conhecimento, com a expressão "valores a partir de ".
-                            Você nunca deve usar expressões como com a palavra "preço". Use sempre a palavra "valor".
-                            Você nunca deve usar expressões como com a palavra "custo". Use sempre a palavra "valor".
-                            Não utilize "pacote" mesmo que o cliente pergunte dessa forma. Utilize sempre "o valor total da locação" quando houver perguntas sobre "pacote".
-                            Sempre que o cliente pedir fotos, videos ou imagens do prédio, retorne apenas: "Atendimento Humano".
-                            Não temos o preço nem a disponibilidade de apartamentos em nosso site portanto não fale.
-                            Para valores, usar sempre a base de conhecimento, com a expressão "valores a partir de ".
-                            Não temos videos disponíveis, mas temos fotos e plantas em nosso site.
-                            Sempre encerre as suas interações com perguntas que instigue o usuário a continuar a interação e saber mais sobre como funciona os apartamentos, porém em uma mensagem separada.
-                            Quando o cliente quiser mudar de idioma no meio da conversa, seja aderente ao idioma solicitado.
-                            Não ofereça serviços ou comodidades que não estejam na base de conhecimento.
-                            Sempre que o cliente perguntar o que esta incluso no pacote, ou o que esta incluso no aluguel, responder: Aluguel, Condomínio e IPTU.
-                            Wifi não esta incluso no preço.
-                            Não fornecer informações de valores e preços, somente quando o cliente perguntar.
-                            Se o cliente falar que o valor esta alto ou muito caro, estimule ele falar qual é o seu orçamento  e ofereça unidades com valor mais aderente ao orçamento do cliente.
-                            Responda as informações sobre a Vila 11 e locação com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão.
-                            Informações sobre pontos de interesse, como terminais de metro, trem, onibus, aeroportos, escolas, hospitais, supermercados, farmácias, padarias, academias e parques, podem ser respondidas com informações fora do conteúdo abaixo.
-                            Estimule sempre o cliente falar o que ele precisa, localização, quantidade de dormitórios, se vai mudar imediato ou em data futura.
-                            """
-                        )
+    f"""Você é um assistente virtual da Vila 11, responsável por conversar sobre apartamentos disponíveis para locação.
+
+REGRAS IMPORTANTES (obrigatórias):
+1. **NUNCA informe valores** de qualquer tipo **a menos que o usuário pergunte diretamente utilizando as palavras "valor" ou "preço" na pergunta**.
+   - Exemplo de pergunta permitida: "Qual é o valor do aluguel?"
+   - Exemplo de pergunta NÃO permitida: "Quero saber mais sobre o apartamento" → NÃO RESPONDA COM VALORES.
+2. **NUNCA use as palavras "preço", "custo" ou "pacote"**, mesmo se o cliente usar essas palavras. Substitua por:
+   - "valor"
+   - "o valor total da locação" (quando se referirem a pacote)
+
+3. Se o usuário perguntar **o que está incluído no aluguel** ou no valor, responda sempre:
+   - **Aluguel, Condomínio e IPTU estão inclusos. Wifi não está incluso.**
+
+RESPOSTAS AUTOMÁTICAS:
+- Se o usuário disser qualquer das seguintes frases, **responda APENAS com o texto indicado**:
+  - "Quero falar com um atendente", "falar com um corretor", "agendar uma visita" → **"Atendimento Humano"**
+  - "Encerrar", "sair", "finalizar a conversa" → **"encerrar conversa"**
+  - "Quero ver fotos", "tem vídeo?", "quero imagens do prédio" → **"Atendimento Humano"**
+  - Não sabe responder → **"Desculpe, não consigo falar sobre esses assuntos."**
+
+LIMITAÇÕES:
+- Nunca fale sobre **preços ou disponibilidade** com base no site. Essa informação **não está disponível online**.
+- Não ofereça serviços ou comodidades além dos confirmados.
+- Não ofereça vídeos. Fotos e plantas estão disponíveis no site.
+
+Se o cliente disser que o valor está alto ou caro:
+- **NÃO diga valores automaticamente**.
+- Responda: "Podemos procurar uma unidade mais alinhada ao seu orçamento. Qual seria o valor ideal para você?"
+
+Se o cliente mudar de idioma no meio da conversa, continue no idioma solicitado.
+
+Você **só pode falar sobre os apartamentos da Vila 11**. Informações sobre pontos de interesse locais (como metrô, mercados, hospitais, parques etc.) podem ser respondidas com base em conhecimento geral.
+
+Sempre finalize suas respostas com uma pergunta para incentivar o usuário a continuar a conversa, em uma nova mensagem.
+Exemplos:
+- "Você já sabe quantos dormitórios está procurando?"
+- "Está planejando a mudança para agora ou para uma data futura?"
+- "Prefere qual localização?"
+
+
+"""
+)
+
+
                         print(system_prompt)
 
                         print(f"Chave OpenAI usada: {openai_key}")
                         client = OpenAI(api_key=openai_key)
 
                         print("Gerando resposta com OpenAI...")
+                        # Histórico da sessão atual
+                        mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+                        historico = [{"role": "system", "content": system_prompt}]
+
+                        # Trunca para as últimas 15 interações (opcional)
+                        for msg in list(mensagens_anteriores)[-15:]:
+                            historico.append({
+                                "role": "user" if msg.enviado_por_usuario else "assistant",
+                                "content": msg.texto
+                            })
+
+                        # Nova mensagem
+                        historico.append({"role": "user", "content": texto_usuario})
+
+                        # Envio para OpenAI
                         response = client.chat.completions.create(
                             model="gpt-4",
-                            messages=[
-                                {"role": "system", "content": system_prompt},
-                                {"role": "user", "content": f"Contexto:\n{contexto}"},
-                                {"role": "user", "content": texto_usuario}
-                            ]
+                            messages=historico
                         )
                         resposta_texto = response.choices[0].message.content
+
                         print(f"Resposta gerada com sucesso.: {resposta_texto}")
 
                 except Exception as e:
@@ -224,7 +250,7 @@ def limpar_historico(request):
         Mensagem.objects.filter(session_id=session_id).delete()
     return redirect('chatbot')
 
-
+#Parametros CRUD
 @csrf_exempt
 def parametro_list(request):
     parametros = Parametro.objects.all().values('id', 'parametroChave', 'parametroValor')  # ou fields conforme seu modelo
@@ -301,4 +327,87 @@ def parametro_delete(request, pk):
         'id': parametro.id,
         'chave': parametro.parametroChave,
         'valor': parametro.parametroValor
+    })
+
+#Mensagens CRUD
+@csrf_exempt
+def mensagem_list(request):
+    mensagem = Mensagem.objects.all().values('id', 'texto', 'enviado_por_usuario', 'timestamp', 'session_id')  # ou fields conforme seu modelo
+    return JsonResponse(list(mensagem), safe=False)
+
+
+@csrf_exempt
+def mensagem_create(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+        form = MensagemForm(data)
+        if form.is_valid():
+            mensagem = form.save()
+            return JsonResponse({
+                'id': mensagem.id,
+                'texto': mensagem.texto,
+                'enviado_por_usuario': mensagem.enviado_por_usuario,
+                'session_id': mensagem.session_id,
+                'mensagem': 'Mensagem criada com sucesso!'
+            }, status=201)
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)
+
+    return JsonResponse({'error': 'Método não permitido'}, status=405)
+
+
+@csrf_exempt
+def mensagem_update(request, pk):
+    parametro = get_object_or_404(Mensagem, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'JSON inválido'}, status=400)
+
+        form = MensagemForm(data, instance=parametro)
+        if form.is_valid():
+            mensagem = form.save()
+            return JsonResponse({
+                'success': True,
+                'mensagem': {
+                    'id': mensagem.id,
+                    'texto': mensagem.texto,
+                    'enviado_por_usuario': mensagem.enviado_por_usuario,
+                    'session_id': mensagem.session_id
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+    else:
+        return JsonResponse({
+            'id': mensagem.id,
+            'texto': mensagem.texto,
+            'enviado_por_usuario': mensagem.enviado_por_usuario,
+            'session_id': mensagem.session_id
+        })
+
+
+@csrf_exempt
+def mensagem_delete(request, pk):
+    mensagem = get_object_or_404(Mensagem, pk=pk)
+
+    if request.method == 'POST':
+        Mensagem.delete()
+        return JsonResponse({
+            'success': True,
+            'message': f"Mensagem '{mensagem.texto}' excluído com sucesso."
+        })
+
+    return JsonResponse({
+        'id': mensagem.id,
+        'texto': mensagem.texto,
+        'enviado_por_usuario': mensagem.enviado_por_usuario,
+        'session_id': mensagem.session_id
     })
