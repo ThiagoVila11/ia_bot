@@ -150,7 +150,7 @@ def chatbot(request):
                         contexto = "\n\n".join([doc.page_content for doc in docs])
 
                         system_prompt = (
-                                        f"""Você é um atendente da empresa Vila11 e responde perguntas sobre contratos, aluguéis e documentos. "
+                                        f"""Você é um atendente da empresa Vila11 que deve ser humano e responde perguntas sobre contratos, aluguéis e documentos. "
                                         "Responda com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão."
                                         "Formate o texto com quebras de linha e parágrafos, se necessário."
                                         "Responda de forma clara e objetiva, evitando jargões técnicos desnecessários.
@@ -168,7 +168,6 @@ def chatbot(request):
                                         Sempre que o cliente perguntar o que esta incluso no pacote, ou o que esta incluso no aluguel, responder: Aluguel, Condomínio e IPTU.
                                         Wifi não esta incluso no preço.
                                         Não fornecer informações de valores e preços, somente quando o cliente perguntar.
-                                        Se o cliente falar que o valor esta alto ou muito caro, estimule ele falar qual é o seu orçamento  e ofereça unidades com valor mais aderente ao orçamento do cliente.
                                         Conteúdo base:
                                         {contexto}
                                         """
