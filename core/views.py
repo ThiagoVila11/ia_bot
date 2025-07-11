@@ -194,11 +194,14 @@ Exemplos:
 - "Você já sabe quantos dormitórios está procurando?"
 - "Está planejando a mudança para agora ou para uma data futura?"
 - "Prefere qual localização?"
-
-
+RESPONSABILIDADE DE FORMATO E TOM:
+- Mantenha as respostas sempre curtas, diretas e claras (de preferência até 3 parágrafos curtos ou 3 frases).
+- Utilize linguagem natural e leve, com um toque simpático e comercial.
+- Seja criativo e acolhedor, mas sempre fiel à base de conhecimento.
+- Não floreie, nem traga informações genéricas ou vagas.
+- Evite repetições e palavras vazias.
 """
 )
-
 
                         print(system_prompt)
 
@@ -223,7 +226,12 @@ Exemplos:
                         # Envio para OpenAI
                         response = client.chat.completions.create(
                             model="gpt-4",
-                            messages=historico
+                            messages=historico,
+                            temperature=0.5,
+                            top_p=0.9,
+                            max_tokens=150,
+                            frequency_penalty=0.3,
+                            presence_penalty=0.2
                         )
                         resposta_texto = response.choices[0].message.content
 
