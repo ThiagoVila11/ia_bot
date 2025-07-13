@@ -20,7 +20,8 @@ class MensagemForm(forms.ModelForm):
 class ContextoForm(forms.ModelForm):
     class Meta:
         model = Contexto
-        fields = ['contextoConteudo']
+        fields = ['contextoTitulo', 'contextoConteudo', 'contextoAtual']
         widgets = {
-            'contextoConteudo': forms.Textarea(attrs={'rows': 4}),
+            'contextoConteudo': forms.Textarea(attrs={'rows': 15}),
+            'contextoAtual': forms.CheckboxInput(),
         }

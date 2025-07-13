@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Painel{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Topbar com botão e título -->
+    <header class="bg-blue-900 shadow-md px-4 py-3 flex items-center">
+        <!-- Botão abrir sidebar sempre visível -->
+        <button id="toggleSidebar" class="text-white text-2xl font-bold mr-3">
+            ☰
+        </button>
+        <!-- Título Vila11 -->
+        <h1 class="text-white text-2xl font-bold">Vila11</h1>
+    </header>
+
+    <div class="flex flex-1">
+        <!-- Sidebar fixa e retrátil -->
+        <aside id="sidebar" class="bg-blue-900 text-white w-64 space-y-6 py-7 px-4 fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 z-40">
+            <!-- Botão fechar sidebar sempre visível -->
+            <div class="flex justify-end mb-4">
+                <button id="closeSidebar" class="text-white text-3xl font-bold">&times;</button>
+            </div>
+
+            <nav class="space-y-3">
+                <a href="{% url 'lista_sessoes' %}" class="block hover:bg-blue-700 px-3 py-2 rounded">📂 Sessões</a>
+                <a href="{% url 'listar_contextos' %}" class="block hover:bg-blue-700 px-3 py-2 rounded">📚 Contextos</a>
+                <a href="{% url 'parametro_list' %}" class="block hover:bg-blue-700 px-3 py-2 rounded">⚙️ Parâmetros</a>
+                <a href="#" class="block hover:bg-blue-700 px-3 py-2 rounded">👥 Consultores</a>
+            </nav>
+        </aside>
+
+        <!-- Conteúdo principal -->
+        <main class="flex-1 p-6">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Script para abrir/fechar sidebar -->
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("toggleSidebar");
+        const closeBtn = document.getElementById("closeSidebar");
+
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("-translate-x-full");
+        });
+
+        closeBtn.addEventListener("click", () => {
+            sidebar.classList.add("-translate-x-full");
+        });
+    </script>
+
+</body>
+</html>

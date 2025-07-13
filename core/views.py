@@ -15,8 +15,9 @@ from .models import Mensagem
 from openai import OpenAI
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Parametro
+from .models import Parametro, Contexto
 from .forms import ParametroForm, MensagemForm, ContextoForm
+from django.db.models import Max
 
 
 def get_openai_key():
@@ -110,30 +111,49 @@ def chatbot(request):
         request.session.save()  # garante que a sessão seja criada
 
     session_id = request.session.session_key
-    #print(f"ID da sessão: {session_id}")
+
+    if request.session.get('email_usuario') is None:
+        request.session['email_usuario'] = "nao@informado.com.br"
+    if request.session.get('nome_usuario') is None:
+        request.session['nome_usuario'] = "Usuário Anônimo"
+
     if request.method == 'POST':
         #print("Recebendo mensagem do usuário...")
         texto_usuario = request.POST.get('mensagem')
         if texto_usuario:
-            # Salva a mensagem do usuário
-            #Mensagem.objects.create(texto=texto_usuario, enviado_por_usuario=True)
-            Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True)
-            user_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
+            Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+            idmensagem = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).last().id
+            print(f"Mensagem do usuário recebida: {texto_usuario} (ID: {idmensagem})")
+            cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
+            nrmsg = Mensagem.objects.filter(session_id=session_id).count()
+            #print(f"Número de mensagens totais: {nrmsg} + {texto_usuario}")
+            
+            if cliente_messages == 2:
+                mensagem = Mensagem.objects.get(id=idmensagem)
+                mensagem.nome = texto_usuario
+                mensagem.save()
+                request.session['nome_usuario'] = texto_usuario  # 🔹 salva na sessão
+            elif cliente_messages == 3:
+                mensagem = Mensagem.objects.get(id=idmensagem)
+                mensagem.email = texto_usuario
+                mensagem.save()
+                request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
 
-            # Checa se é a primeira vez (sem mensagens no banco)
-            if user_messages == 1: #Mensagem.objects.filter(session_id=session_id).count() == 1:
-                Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False)
-                Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False)
-                Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False)
-                Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False)
-                Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False)
-            elif user_messages == 2: #Mensagem.objects.filter(session_id=session_id).count() == 7:
-                Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False)
-            elif user_messages == 3: #Mensagem.objects.filter(session_id=session_id).count() == 9:
-                Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False)
+
+            print(f"Número de mensagens cliente: {cliente_messages} + {texto_usuario}")
+                
+            if Mensagem.objects.filter(session_id=session_id).count() == 1:
+                Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+            elif Mensagem.objects.filter(session_id=session_id).count() == 7:
+                Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+            elif Mensagem.objects.filter(session_id=session_id).count() == 9:
+                Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
             else:
                 try:
-                    #print("Verificando índice FAISS...")
                     vector_dir = "vector_index"
                     if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
                         resposta_texto = "Erro: índice de conhecimento não encontrado."
@@ -206,10 +226,15 @@ def chatbot(request):
                 except Exception as e:
                     resposta_texto = f"Erro ao gerar resposta: {str(e)}"
 
-                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False)
-
-
-    #mensagens = Mensagem.objects.order_by('timestamp')
+                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                if resposta_texto.lower() in ["encerrar conversa", "sair", "finalizar"]:
+                    Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    return redirect('chatbot')
+                
+                if resposta_texto.lower() == "atendimento humano":
+                    Mensagem.objects.create(session_id=session_id, texto="Encaminhando para atendimento humano...", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    return redirect('chatbot')
+                
     mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
     print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
     return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
@@ -385,3 +410,64 @@ def mensagem_delete(request, pk):
         'enviado_por_usuario': mensagem.enviado_por_usuario,
         'session_id': mensagem.session_id
     })
+
+#paginas da web
+
+def lista_sessoes(request):
+    sessoes = (
+        Mensagem.objects
+        .values('session_id')
+        .annotate(
+            nome=Max('nome'),
+            email=Max('email')
+        )
+        .order_by('-session_id')
+    )
+    return render(request, 'chat/sessoes.html', {'sessoes': sessoes})
+
+def ver_conversa(request, session_id):
+    mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+    return render(request, 'chat/ver_conversa.html', {'mensagens': mensagens, 'session_id': session_id})
+
+def enviar_conversa(request, session_id):
+    if request.method == "POST":
+        # Aqui você pode processar a conversa, enviar por email, salvar PDF, etc.
+        #messages.success(request, f"Conversa da sessão {session_id} enviada com sucesso!")
+        print(f"Conversa da sessão {session_id} enviada com sucesso!")
+    return redirect('lista_sessoes')
+
+def listar_contextos(request):
+    contextos = Contexto.objects.all().order_by('-contextoAtivo')
+    return render(request, 'chat/lista_contextos.html', {'contextos': contextos})
+
+def contexto_adicionar(request):
+    if request.method == 'POST':
+        form = ContextoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_contextos')  # ajuste para sua URL de lista
+    else:
+        form = ContextoForm()
+    return render(request, 'chat/contexto_adicionar.html', {'form': form})
+
+def contexto_consultar(request, id):
+    contexto = get_object_or_404(Contexto, id=id)
+    return render(request, 'chat/contexto_detalhe.html', {'contexto': contexto})
+
+def contexto_alterar(request, id):
+    contexto = get_object_or_404(Contexto, id=id)
+    if request.method == 'POST':
+        form = ContextoForm(request.POST, instance=contexto)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_contextos')
+    else:
+        form = ContextoForm(instance=contexto)
+    return render(request, 'chat/contexto_form.html', {'form': form, 'contexto': contexto})
+
+def contexto_excluir(request, id):
+    contexto = get_object_or_404(Contexto, id=id)
+    if request.method == 'POST':
+        contexto.delete()
+        return redirect('listar_contextos')
+    return render(request, 'chat/contexto_confirmar_exclusao.html', {'contexto': contexto})

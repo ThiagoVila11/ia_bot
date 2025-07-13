@@ -1,15 +1,19 @@
 from django.db import models
 
 class Mensagem(models.Model):
-    texto = models.TextField()
-    enviado_por_usuario = models.BooleanField(default=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    session_id = models.CharField(max_length=100, default="", blank=None)  # novo campo
+    texto = models.TextField(verbose_name="Texto da Mensagem")
+    enviado_por_usuario = models.BooleanField(verbose_name="Eviado pelo usuário", default=True)
+    timestamp = models.DateTimeField(verbose_name="Data/Hora da mensagem", auto_now_add=True)
+    session_id = models.CharField(verbose_name="Sessão", max_length=100, default="", blank=None)  # novo campo
+    nome = models.CharField(verbose_name="Nome", max_length=100, default="", blank=None)  # novo campo
+    email = models.EmailField(verbose_name="Email", default="", blank=None)  # novo campo
 
 
 class Contexto(models.Model):
-    contextoConteudo = models.TextField()
-    contextoAtivo = models.DateTimeField(auto_now_add=True)
+    contextoTitulo = models.CharField(max_length=100, blank=True, null=True, unique=True, verbose_name="Título do Contexto")
+    contextoConteudo = models.TextField(verbose_name="Conteúdo do Contexto")
+    contextoAtivo = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name="Data/Hora de Ativação")
+    contextoAtual = models.BooleanField(default=False, verbose_name="Atual")
 
     def __str__(self):
         return f"Contexto {self.id} - {self.contextoConteudo[:50]}..."
