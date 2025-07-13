@@ -11,25 +11,33 @@
         </div>
     {% endif %}
 
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <h1 class="text-2xl font-bold mb-6">📂 Sessões de Chat</h1>
 
-        <table class="min-w-full bg-white shadow rounded-lg">
+        <table class="min-w-full bg-white shadow rounded-lg text-sm">
             <thead>
-                <tr class="bg-blue-600 text-white text-left text-sm uppercase tracking-wider">
-                    <th class="px-6 py-3">Código da Sessão</th>
-                    <th class="px-6 py-3">Nome</th>
-                    <th class="px-6 py-3">E-mail</th>
-                    <th class="px-6 py-3 text-center">Ações</th>
+                <tr class="bg-blue-600 text-white text-left uppercase tracking-wider">
+                    <th class="px-4 py-3">Sessão</th>
+                    <th class="px-4 py-3">Nome</th>
+                    <th class="px-4 py-3">E-mail</th>
+                    <th class="px-4 py-3">Tokens de pergunta</th>
+                    <th class="px-4 py-3">Tokens de resposta</th>
+                    <th class="px-4 py-3">Tokens totais</th>
+                    <th class="px-4 py-3">Custo total em US$</th>
+                    <th class="px-4 py-3 text-center">Ações</th>
                 </tr>
             </thead>
-            <tbody class="text-sm text-gray-700">
+            <tbody class="text-gray-800">
                 {% for sessao in sessoes %}
                 <tr class="border-b hover:bg-gray-100">
-                    <td class="px-6 py-3 font-mono">{{ sessao.session_id }}</td>
-                    <td class="px-6 py-3">{{ sessao.nome|default:"—" }}</td>
-                    <td class="px-6 py-3">{{ sessao.email|default:"—" }}</td>
-                    <td class="px-6 py-3 text-center space-x-2">
+                    <td class="px-4 py-3 font-mono">{{ sessao.session_id }}</td>
+                    <td class="px-4 py-3">{{ sessao.nome|default:"—" }}</td>
+                    <td class="px-4 py-3">{{ sessao.email|default:"—" }}</td>
+                    <td class="px-4 py-3">{{ sessao.prompt_tokens }}</td>
+                    <td class="px-4 py-3">{{ sessao.completion_tokens }}</td>
+                    <td class="px-4 py-3">{{ sessao.total_tokens }}</td>
+                    <td class="px-4 py-3">{{ sessao.custo_estimado|floatformat:4 }}</td>
+                    <td class="px-4 py-3 text-center space-x-2">
                         <a href="{% url 'ver_conversa' sessao.session_id %}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
                             Ver Conversa
                         </a>
@@ -43,7 +51,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center text-gray-500 py-6">Nenhuma sessão encontrada.</td>
+                    <td colspan="8" class="text-center text-gray-500 py-6">Nenhuma sessão encontrada.</td>
                 </tr>
                 {% endfor %}
             </tbody>

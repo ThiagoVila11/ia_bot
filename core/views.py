@@ -17,7 +17,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Parametro, Contexto
 from .forms import ParametroForm, MensagemForm, ContextoForm
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 
 def get_openai_key():
@@ -129,14 +129,16 @@ def chatbot(request):
             #print(f"Número de mensagens totais: {nrmsg} + {texto_usuario}")
             
             if cliente_messages == 2:
-                mensagem = Mensagem.objects.get(id=idmensagem)
-                mensagem.nome = texto_usuario
-                mensagem.save()
+                #mensagem = Mensagem.objects.get(id=idmensagem)
+                #mensagem.nome = texto_usuario
+                #mensagem.save()
+                Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
                 request.session['nome_usuario'] = texto_usuario  # 🔹 salva na sessão
             elif cliente_messages == 3:
-                mensagem = Mensagem.objects.get(id=idmensagem)
-                mensagem.email = texto_usuario
-                mensagem.save()
+                #mensagem = Mensagem.objects.get(id=idmensagem)
+                #mensagem.email = texto_usuario
+                #mensagem.save()
+                Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
                 request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
 
 
@@ -220,13 +222,26 @@ def chatbot(request):
                             #presence_penalty=0.2
                         )
                         resposta_texto = response.choices[0].message.content
+                        # Recupera uso de tokens
+                        prompt_tokens = response.usage.prompt_tokens
+                        completion_tokens = response.usage.completion_tokens
+                        total_tokens = response.usage.total_tokens
 
-                        #print(f"Resposta gerada com sucesso.: {resposta_texto}")
+                        # Calcula custo estimado (valores em dólar para gpt-4 em julho/2025)
+                        # Para gpt-4-turbo use $0.01 e $0.03
+                        prompt_cost = prompt_tokens * 0.001 / 1000
+                        completion_cost = completion_tokens * 0.015 / 1000
+                        total_cost = prompt_cost + completion_cost
 
                 except Exception as e:
                     resposta_texto = f"Erro ao gerar resposta: {str(e)}"
 
-                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, 
+                                        enviado_por_usuario=False, nome=request.session.get('nome_usuario'),
+                                         email=request.session.get('email_usuario'),
+                                         prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                                         total_tokens=total_tokens, custo_estimado=total_cost)
+                
                 if resposta_texto.lower() in ["encerrar conversa", "sair", "finalizar"]:
                     Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                     return redirect('chatbot')
@@ -419,7 +434,11 @@ def lista_sessoes(request):
         .values('session_id')
         .annotate(
             nome=Max('nome'),
-            email=Max('email')
+            email=Max('email'),
+            prompt_tokens=Sum('prompt_tokens'),
+            completion_tokens=Sum('completion_tokens'),
+            total_tokens=Sum('total_tokens'),
+            custo_estimado=Sum('custo_estimado')
         )
         .order_by('-session_id')
     )

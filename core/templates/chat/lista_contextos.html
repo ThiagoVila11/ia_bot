@@ -3,12 +3,11 @@
 {% block title %}Lista de Contextos{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+<div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">📚 Lista de Contextos</h1>
         <a href="{% url 'contexto_adicionar' %}" 
            class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow transition">
-            <!-- Ícone + -->
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -16,7 +15,7 @@
         </a>
     </div>
 
-    <table class="min-w-full table-auto border border-gray-300">
+    <table class="min-w-full table-auto border border-gray-300 text-sm">
         <thead class="bg-blue-600 text-white text-left">
             <tr>
                 <th class="px-4 py-2">ID</th>
@@ -26,7 +25,7 @@
                 <th class="px-4 py-2 text-center">Ações</th>
             </tr>
         </thead>
-        <tbody class="text-sm text-gray-800">
+        <tbody class="text-gray-800">
             {% for c in contextos %}
             <tr class="border-t hover:bg-gray-100">
                 <td class="px-4 py-2 font-mono">{{ c.id }}</td>
@@ -46,7 +45,6 @@
                     <a href="{% url 'contexto_alterar' c.id %}" title="Alterar" 
                        class="inline-block text-green-600 hover:text-green-800">
                         <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5h2m-1-1v2m-5 4h4m1 0h4m-6 7v-4m4 4h-4" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M16 3l5 5-9 9-5-5 9-9z" />
                         </svg>
                     </a>
@@ -63,10 +61,11 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center text-gray-500 py-4">Nenhum contexto encontrado.</td>
+                <td colspan="9" class="text-center text-gray-500 py-4">Nenhum contexto encontrado.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endblock %}
+

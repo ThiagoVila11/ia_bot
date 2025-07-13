@@ -7,6 +7,10 @@ class Mensagem(models.Model):
     session_id = models.CharField(verbose_name="Sessão", max_length=100, default="", blank=None)  # novo campo
     nome = models.CharField(verbose_name="Nome", max_length=100, default="", blank=None)  # novo campo
     email = models.EmailField(verbose_name="Email", default="", blank=None)  # novo campo
+    prompt_tokens = models.IntegerField(verbose_name="Tokens de Prompt", default=0, blank=True, null=True)
+    completion_tokens = models.IntegerField(verbose_name="Tokens de Conclusão", default=0, blank=True, null=True)
+    total_tokens = models.IntegerField(verbose_name="Tokens Totais", default=0, blank=True, null=True)
+    custo_estimado = models.DecimalField(verbose_name="Custo Estimado", max_digits=10, decimal_places=6, default=0.0, blank=True, null=True)
 
 
 class Contexto(models.Model):
