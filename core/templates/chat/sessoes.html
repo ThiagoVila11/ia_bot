@@ -41,10 +41,10 @@
                         <a href="{% url 'ver_conversa' sessao.session_id %}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
                             Ver Conversa
                         </a>
-                        <form action="{% url 'enviar_conversa' sessao.session_id %}" method="post" class="inline">
+                        <form action="{% url 'excluir_conversa' sessao.session_id %}" method="post" class="inline" onsubmit="return confirm('Deseja realmente excluir esta conversa?');">
                             {% csrf_token %}
-                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                                Enviar
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                                Excluir
                             </button>
                         </form>
                     </td>

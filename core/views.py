@@ -18,6 +18,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Parametro, Contexto
 from .forms import ParametroForm, MensagemForm, ContextoForm
 from django.db.models import Max, Sum
+from django.contrib import messages
 
 
 def get_openai_key():
@@ -453,6 +454,12 @@ def enviar_conversa(request, session_id):
         # Aqui você pode processar a conversa, enviar por email, salvar PDF, etc.
         #messages.success(request, f"Conversa da sessão {session_id} enviada com sucesso!")
         print(f"Conversa da sessão {session_id} enviada com sucesso!")
+    return redirect('lista_sessoes')
+
+def excluir_conversa(request, session_id):
+    if request.method == "POST":
+        Mensagem.objects.filter(session_id=session_id).delete()
+        messages.success(request, "Conversa excluída com sucesso.")
     return redirect('lista_sessoes')
 
 def listar_contextos(request):

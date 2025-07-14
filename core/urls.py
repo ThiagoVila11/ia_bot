@@ -16,6 +16,7 @@ urlpatterns = [
     path('mensagens/novo/', views.mensagem_create, name='mensagens_create'),
     path('mensagens/<int:pk>/editar/', views.mensagem_update, name='mensagens_update'),
     path('mensagens/<int:pk>/excluir/', views.mensagem_delete, name='mensagens_delete'),
+    path('sessoes/<str:session_id>/excluir/', views.excluir_conversa, name='excluir_conversa'),
     # paginas html
     path('sessoes/', views.lista_sessoes, name='lista_sessoes'),
     path('ver_conversa/<str:session_id>/', views.ver_conversa, name='ver_conversa'),
