@@ -108,10 +108,18 @@ def responder_pergunta(request):
     
 
 def chatbot(request):
+
+    if request.session.get('session_id') is None:
+        request.session.save()
+        request.session['session_id'] = request.session.session_key
+
     if not request.session.session_key:
         request.session.save()  # garante que a sessão seja criada
+        request.session['session_id'] = request.session.session_key
+        
+    session_id = request.session['session_id'] #request.session.session_key
+    print(f"ID da sessão atual: {session_id}")
 
-    session_id = request.session.session_key
 
     if request.session.get('email_usuario') is None:
         request.session['email_usuario'] = "nao@informado.com.br"
