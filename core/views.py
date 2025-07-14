@@ -268,8 +268,8 @@ def limpar_historico(request):
 #Parametros CRUD
 @csrf_exempt
 def parametro_list(request):
-    parametros = Parametro.objects.all().values('id', 'parametroChave', 'parametroValor')  # ou fields conforme seu modelo
-    return JsonResponse(list(parametros), safe=False)
+    parametros = Parametro.objects.all()
+    return render(request, 'chat/parametro_list.html', {'parametros': parametros})
 
 
 @csrf_exempt
@@ -497,3 +497,36 @@ def contexto_excluir(request, id):
         contexto.delete()
         return redirect('listar_contextos')
     return render(request, 'chat/contexto_confirmar_exclusao.html', {'contexto': contexto})
+
+# Parametros CRUD
+def listar_parametros(request):
+    parametros = Parametro.objects.all()
+    return render(request, 'parametros/listar.html', {'parametros': parametros})
+
+def adicionar_parametro(request):
+    if request.method == 'POST':
+        form = ParametroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_parametros')
+    else:
+        form = ParametroForm()
+    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Adicionar Parâmetro'})
+
+def alterar_parametro(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == 'POST':
+        form = ParametroForm(request.POST, instance=parametro)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_parametros')
+    else:
+        form = ParametroForm(instance=parametro)
+    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Alterar Parâmetro'})
+
+def excluir_parametro(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == 'POST':
+        parametro.delete()
+        return redirect('listar_parametros')
+    return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})

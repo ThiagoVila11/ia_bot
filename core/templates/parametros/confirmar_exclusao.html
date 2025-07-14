@@ -1,0 +1,13 @@
+{% extends 'chat/base.html' %}
+
+{% block content %}
+<div class="max-w-xl mx-auto p-6 bg-white shadow rounded">
+    <h2 class="text-2xl font-bold text-red-600 mb-4">Confirmação</h2>
+    <p>Tem certeza que deseja excluir o parâmetro <strong>{{ parametro.parametroChave }}</strong>?</p>
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Excluir</button>
+        <a href="{% url 'listar_parametros' %}" class="ml-4 text-gray-600 hover:text-gray-800">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

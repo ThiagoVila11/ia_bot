@@ -3,10 +3,28 @@
 {% block title %}Detalhes do Contexto{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">{{ contexto.contextoTitulo }}</h1>
-    <p class="mb-2"><strong>Conteúdo:</strong></p>
-    <pre class="bg-gray-100 p-3 rounded">{{ contexto.contextoConteudo }}</pre>
-    <p class="mt-4 text-sm text-gray-500">Criado em: {{ contexto.contextoAtivo }}</p>
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg mt-6">
+    <div class="mb-6 border-b pb-4">
+        <h1 class="text-3xl font-bold text-blue-800 flex items-center gap-2">
+            📄 {{ contexto.contextoTitulo|default:"(Sem título)" }}
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Criado em: {{ contexto.contextoAtivo|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div>
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Conteúdo do Contexto:</h2>
+        <div class="bg-gray-100 text-gray-800 text-sm whitespace-pre-wrap font-mono p-4 rounded-lg border border-gray-300 leading-relaxed">
+            {{ contexto.contextoConteudo }}
+        </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+        <a href="{% url 'contexto_alterar' contexto.id %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded mr-2">
+            ✏️ Editar
+        </a>
+        <a href="{% url 'listar_contextos' %}" class="inline-block bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded">
+            ← Voltar
+        </a>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'chat/base.html' %}
+
+{% block title %}Parâmetros{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">⚙️ Parâmetros</h1>
+        <a href="{% url 'adicionar_parametro' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Adicionar</a>
+    </div>
+
+    <table class="min-w-full text-sm border border-gray-300">
+        <thead class="bg-blue-600 text-white">
+            <tr>
+                <th class="px-4 py-2 text-left">Chave</th>
+                <th class="px-4 py-2 text-left">Valor</th>
+                <th class="px-4 py-2 text-center">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in parametros %}
+            <tr class="border-t hover:bg-gray-100">
+                <td class="px-4 py-2 font-mono">{{ p.parametroChave }}</td>
+                <td class="px-4 py-2">{{ p.parametroValor|linebreaks }}</td>
+                <td class="px-4 py-2 text-center space-x-2">
+                    <a href="{% url 'alterar_parametro' p.id %}" class="text-green-600 hover:underline">Editar</a>
+                    <a href="{% url 'parametro_delete' p.id %}" class="text-red-600 hover:underline">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-gray-500 py-4">Nenhum parâmetro cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -2,108 +2,123 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Chatbot com Voz</title>
+    <title>Chatbot com Voz - Vila 11</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 h-screen flex flex-col">
-    <div class="max-w-2xl mx-auto w-full flex flex-col h-full">
-        <h1 class="text-2xl font-bold text-center py-4 bg-blue-600 text-white rounded-t-lg">
-            🤖 Chatbot com Voz
-        </h1>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
 
-        <div id="chat" class="flex-1 overflow-y-auto p-4 bg-white border rounded-b-lg">
-            {% for msg in mensagens %}
-                <div class="mb-2 flex {% if msg.enviado_por_usuario %}justify-end{% else %}justify-start{% endif %}">
-                    <div class="{% if msg.enviado_por_usuario %}bg-blue-500 text-white{% else %}bg-gray-300 text-black{% endif %} px-4 py-2 rounded-lg max-w-[70%]">
-                        {{ msg.texto }}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+<div class="w-full max-w-4xl h-full flex flex-col border rounded shadow bg-white">
 
-        <!-- Indicador de carregamento -->
-        <div id="loading-indicator" class="hidden text-center text-gray-600 py-2">
-            ⏳ Processando resposta...
-        </div>
-
-        <form id="chat-form" method="POST" class="flex items-center p-4 bg-white border-t">
-            {% csrf_token %}
-            <input type="text" id="mensagem" name="mensagem" placeholder="Fale ou digite sua mensagem..." class="flex-1 border rounded-lg p-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            
-            <button type="button" id="btn-voz" onclick="iniciarReconhecimento()" class="mr-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg" title="Falar (ou pressione espaço)">
-                🎤
-            </button>
-
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg mr-2">Enviar</button>
-        </form>
-
-        <form method="POST" action="{% url 'limpar_historico' %}" class="p-4 bg-white border-t flex justify-center">
-            {% csrf_token %}
-            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🗑️ Limpar Histórico</button>
-        </form>
+    <!-- Cabeçalho -->
+    <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+        <div class="font-semibold text-lg">Vivi - Assistente virtual Vila 11</div>
+        <span class="text-sm">online</span>
     </div>
 
-    <!-- JavaScript Reconhecimento de Voz -->
-    <script>
-        const campo = document.getElementById("mensagem");
-        const formulario = document.getElementById("chat-form");
-        const loadingIndicator = document.getElementById("loading-indicator");
+    <!-- Área de Mensagens -->
+    <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-3">
+        {% for msg in mensagens %}
+        <div class="flex {% if msg.enviado_por_usuario %}justify-end{% else %}justify-start{% endif %}">
+            <div class="max-w-[75%] px-4 py-2 rounded-2xl shadow 
+                {% if msg.enviado_por_usuario %}
+                    bg-blue-500 text-white rounded-br-none
+                {% else %}
+                    bg-gray-100 text-gray-900 rounded-bl-none
+                {% endif %}">
+                <p class="text-sm">{{ msg.texto }}</p>
+                <p class="text-[10px] text-right text-gray-500 mt-1">{{ msg.data_hora|date:"H:i" }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
+    <!-- Indicador de carregamento -->
+    <div id="loading-indicator" class="hidden text-center text-gray-500 text-sm py-2">
+        ⏳ Processando resposta...
+    </div>
 
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = "pt-BR";
-            recognition.continuous = true;
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+    <!-- Campo de Entrada -->
+    <form id="chat-form" method="POST" class="flex items-center gap-2 p-4 border-t bg-white">
+        {% csrf_token %}
+        <input type="text" id="mensagem" name="mensagem" placeholder="Digite sua mensagem aqui"
+               class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
 
-            recognition.onresult = function(event) {
-                const resultado = event.results[event.results.length - 1][0].transcript.trim();
-                campo.value = resultado;
+        <button type="button" id="btn-voz" onclick="iniciarReconhecimento()"
+                class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-full" title="Falar (Espaço)">
+            🎤
+        </button>
 
-                setTimeout(() => {
-                    loadingIndicator.classList.remove("hidden");
-                    formulario.submit();
-                }, 500);
-            };
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+        </button>
+    </form>
 
-            recognition.onerror = function(event) {
-                console.error("Erro no reconhecimento de voz:", event.error);
-                alert("Erro no reconhecimento de voz: " + event.error);
-            };
+    <!-- Limpar Histórico -->
+    <form method="POST" action="{% url 'limpar_historico' %}" class="p-2 bg-white text-center border-t">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-red-600 hover:text-red-800">🗑️ Limpar histórico</button>
+    </form>
+</div>
+
+<!-- Reconhecimento de Voz -->
+<script>
+    const campo = document.getElementById("mensagem");
+    const formulario = document.getElementById("chat-form");
+    const loadingIndicator = document.getElementById("loading-indicator");
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = "pt-BR";
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = function(event) {
+            const resultado = event.results[event.results.length - 1][0].transcript.trim();
+            campo.value = resultado;
+            setTimeout(() => {
+                loadingIndicator.classList.remove("hidden");
+                formulario.submit();
+            }, 500);
+        };
+
+        recognition.onerror = function(event) {
+            alert("Erro no reconhecimento de voz: " + event.error);
+        };
+    }
+
+    function iniciarReconhecimento() {
+        if (!recognition) {
+            alert("Seu navegador não suporta reconhecimento de voz.");
+            return;
         }
+        recognition.stop();
+        recognition.start();
+    }
 
-        function iniciarReconhecimento() {
-            if (!recognition) {
-                alert("Seu navegador não suporta reconhecimento de voz.");
-                return;
-            }
-
-            recognition.stop();
-            recognition.start();
+    document.addEventListener("keydown", function(e) {
+        if (e.code === "Space" && document.activeElement !== campo) {
+            e.preventDefault();
+            iniciarReconhecimento();
         }
+    });
 
-        document.addEventListener("keydown", function(e) {
-            if (e.code === "Space" && document.activeElement !== campo) {
-                e.preventDefault();
-                iniciarReconhecimento();
-            }
-        });
+    formulario.addEventListener("submit", function () {
+        loadingIndicator.classList.remove("hidden");
+    });
 
-        // Mostra indicador de carregamento ao enviar
-        formulario.addEventListener("submit", function () {
-            loadingIndicator.classList.remove("hidden");
-        });
-    </script>
+    // Scroll automático
+    const chatDiv = document.getElementById("chat");
+    if (chatDiv) {
+        chatDiv.scrollTo({ top: chatDiv.scrollHeight, behavior: "smooth" });
+    }
+</script>
 
-    <!-- Scroll automático para o final das mensagens -->
-    <script>
-        const chatDiv = document.getElementById("chat");
-        if (chatDiv) {
-            chatDiv.scrollTo({ top: chatDiv.scrollHeight, behavior: "smooth" });
-        }
-    </script>
 </body>
 </html>

@@ -17,6 +17,12 @@ urlpatterns = [
     path('mensagens/<int:pk>/editar/', views.mensagem_update, name='mensagens_update'),
     path('mensagens/<int:pk>/excluir/', views.mensagem_delete, name='mensagens_delete'),
     path('sessoes/<str:session_id>/excluir/', views.excluir_conversa, name='excluir_conversa'),
+    # parametros urls
+    path('parametros/', views.parametro_list, name='parametro_list'),
+    #path('parametros/', views.listar_parametros, name='listar_parametros'),
+    path('parametros/adicionar/', views.adicionar_parametro, name='adicionar_parametro'),
+    path('parametros/<int:pk>/editar/', views.alterar_parametro, name='alterar_parametro'),
+    path('parametros/<int:pk>/excluir/', views.parametro_delete, name='excluir_parametro'),
     # paginas html
     path('sessoes/', views.lista_sessoes, name='lista_sessoes'),
     path('ver_conversa/<str:session_id>/', views.ver_conversa, name='ver_conversa'),
