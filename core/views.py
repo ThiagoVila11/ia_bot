@@ -172,6 +172,9 @@ def chatbot(request):
                     if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
                         resposta_texto = "Erro: índice de conhecimento não encontrado."
                     else:
+                        #busca contexto no banco de dados
+                        contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
+
                         #print("Carregando embeddings e índice FAISS...")
                         openai_key = get_openai_key()
                         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
@@ -184,29 +187,11 @@ def chatbot(request):
                         contexto = "\n\n".join([doc.page_content for doc in docs])
 
                         system_prompt = (
-                                        f"""Você é um atendente da empresa Vila11 que deve ser humano e responde perguntas sobre contratos, aluguéis e documentos. "
-                                        "Responda com base apenas no conteúdo abaixo. Se não houver informação suficiente, diga que não é possível responder com precisão."
-                                        "Formate o texto com quebras de linha e parágrafos, se necessário."
-                                        "Responda de forma clara e objetiva, evitando jargões técnicos desnecessários.
-                                        Se a pergunta for sobre quais unidades estão disponíveis, e você encontrar essa informação no texto, liste os nomes e endereços.
-                                        Sempre que o usuário quiser falar com um humano ou falar com um atendente, retorne apenas: "Atendimento Humano".
-                                        Sempre que o usuário quiser agendar uma visita, retorne apenas: "Atendimento Humano".
-                                        Sempre que o usuário quiser falar com um corretor, retorne apenas: "Atendimento Humano".
-                                        Sempre que o usuário quiser encerrar a conversa, sair ou finalizar, retorne apenas: "encerrar conversa".
-                                        Quando o cliente quiser mudar de idioma no meio da conversa, seja aderente ao idioma solicitado.
-                                        Não ofereça serviços ou comodidades que não estejam na base de conhecimento.
-                                        Não fornecer informações de valores e preços, somente quando o cliente perguntar.
-                                        Se o cliente falar que o valor esta alto ou muito caro, estimule ele falar qual é o seu orçamento  e ofereça unidades com valor mais aderente ao orçamento do cliente.
-                                        Informações sobre pontos de interesse, como terminais de metro, trem, onibus, aeroportos, escolas, hospitais, supermercados, farmácias, padarias, academias e parques, podem ser respondidas com informações fora do contexto.
-                                        Não ofereça serviços ou comodidades que não estejam na base de conhecimento.
-                                        Sempre que o cliente perguntar o que esta incluso no pacote, ou o que esta incluso no aluguel, responder: Aluguel, Condomínio e IPTU.
-                                        Wifi não esta incluso no preço.
-                                        Não fornecer informações de valores e preços, somente quando o cliente perguntar.
+                                        f"""{contexto_escrito}
                                         Conteúdo base:
                                         {contexto}
-                                        """
-)
-
+                                        """)
+                        print(f"Contexto usado: {contexto_escrito}")
                         client = OpenAI(api_key=openai_key)
 
                         # Histórico da sessão atual
