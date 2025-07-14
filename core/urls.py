@@ -32,4 +32,6 @@ urlpatterns = [
     path('contextos/<int:id>/', views.contexto_consultar, name='contexto_consultar'),
     path('contextos/<int:id>/alterar/', views.contexto_alterar, name='contexto_alterar'),
     path('contextos/<int:id>/excluir/', views.contexto_excluir, name='contexto_excluir'),
+    #funções do chatbot
+    path('inatividade/', views.mensagem_inatividade, name='mensagem_inatividade'),
 ]

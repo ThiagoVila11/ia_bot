@@ -122,3 +122,47 @@
 
 </body>
 </html>
+<script>
+    let timeoutId;
+
+    async function buscarMensagemInatividade() {
+        try {
+            const response = await fetch("{% url 'mensagem_inatividade' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+            if (data.texto) {
+                const chat = document.getElementById("chat");
+                const msg = document.createElement("div");
+                msg.className = "flex justify-start mb-2";
+                msg.innerHTML = `
+                    <div class="max-w-[75%] px-4 py-2 rounded-2xl shadow bg-gray-100 text-gray-900 rounded-bl-none">
+                        <p class="text-sm">${data.texto}</p>
+                        <p class="text-[10px] text-right text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                `;
+                chat.appendChild(msg);
+                chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
+            }
+        } catch (error) {
+            console.error("Erro ao buscar mensagem de inatividade:", error);
+        }
+    }
+
+    function resetarTimerInatividade() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(buscarMensagemInatividade, 2 * 60 * 1000); // 2 minutos
+    }
+
+    document.addEventListener("mousemove", resetarTimerInatividade);
+    document.addEventListener("keydown", resetarTimerInatividade);
+    document.getElementById("mensagem")?.addEventListener("input", resetarTimerInatividade);
+
+    resetarTimerInatividade();
+</script>

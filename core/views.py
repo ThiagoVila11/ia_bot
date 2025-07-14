@@ -19,6 +19,7 @@ from .models import Parametro, Contexto
 from .forms import ParametroForm, MensagemForm, ContextoForm
 from django.db.models import Max, Sum
 from django.contrib import messages
+from django.utils import timezone
 
 
 def get_openai_key():
@@ -539,3 +540,19 @@ def excluir_parametro(request, pk):
         parametro.delete()
         return redirect('listar_parametros')
     return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})
+
+def mensagem_inatividade(request):
+    if request.method == 'POST':
+        session_id = request.session.get('session_id') #request.session.session_key or request.session.save()
+        texto = "Percebi que tem um tempinho que paramos de conversar. Precisa de mais alguma ajuda em nossa conversa?"
+
+        # Salva no histórico (opcional)
+        Mensagem.objects.create(
+            session_id=session_id,
+            enviado_por_usuario=False,
+            texto=texto,
+            email=request.session.get('email_usuario'),
+            nome=request.session.get('nome_usuario')
+        )   
+
+        return JsonResponse({'texto': texto})
