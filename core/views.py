@@ -112,17 +112,19 @@ def chatbot(request):
     if request.session.get('session_id') is None:
         request.session.save()
         request.session['session_id'] = request.session.session_key
+        print("Sessão criada e ID salvo na sessão.")
 
-    if not request.session.session_key:
-        request.session.save()  # garante que a sessão seja criada
-        request.session['session_id'] = request.session.session_key
+    #if not request.session.session_key:
+    #    request.session.save()  # garante que a sessão seja criada
+    #    request.session['session_id'] = request.session.session_key
         
-    session_id = request.session['session_id'] #request.session.session_key
+    session_id = request.session.get('session_id')  #request.session.session_key
     print(f"ID da sessão atual: {session_id}")
 
 
     if request.session.get('email_usuario') is None:
         request.session['email_usuario'] = "nao@informado.com.br"
+
     if request.session.get('nome_usuario') is None:
         request.session['nome_usuario'] = "Usuário Anônimo"
 
@@ -266,10 +268,9 @@ def chatbot(request):
 
 @csrf_exempt
 def limpar_historico(request):
+    session_id = request.session.get('session_id')
     if request.method == 'POST':
-        if not request.session.session_key:
-            request.session.save()
-        session_id = request.session.session_key
+        #session_id = request.session.session_key
         Mensagem.objects.filter(session_id=session_id).delete()
     return redirect('chatbot')
 
