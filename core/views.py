@@ -608,7 +608,8 @@ def gerar_resposta(request, mensagem, remetente):
 
     if request.method == 'POST':
         print("Recebendo mensagem do usuário...")
-        texto_usuario = request.POST.get('mensagem')
+        texto_usuario = mensagem
+        print(f"Texto do usuário: {texto_usuario}")
         if texto_usuario:
             Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
             idmensagem = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).last().id
