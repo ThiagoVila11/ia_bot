@@ -37,4 +37,4 @@ urlpatterns = [
     #twilio urls
     path('whatsapp/', views.webhook_twilio, name='webhook_twilio'),
     path('enviar-mensagem/', views.enviar_mensagem, name='enviar-mensagem'),
-]
+] 
