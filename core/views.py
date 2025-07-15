@@ -1,5 +1,6 @@
 import json
 import os
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -20,6 +21,10 @@ from .forms import ParametroForm, MensagemForm, ContextoForm
 from django.db.models import Max, Sum
 from django.contrib import messages
 from django.utils import timezone
+from twilio.rest import Client
+from django.http import HttpResponse
+from rest_framework.decorators import api_view
+
 
 
 def get_openai_key():
@@ -541,3 +546,62 @@ def mensagem_inatividade(request):
         )   
 
         return JsonResponse({'texto': texto})
+    
+    
+def enviar_mensagem(numero_destino, mensagem_texto):
+    account_sid = 'SACa7493a9fd84fe39c5abc3f17a2ee6a7e'
+    auth_token = '2d83bf9cf9a7ee4709af8d88bf9301fe'
+    from_whatsapp_number = 'whatsapp:+14155238886'
+    to_whatsapp_number = f'whatsapp:{numero_destino}'
+
+    client = Client(account_sid, auth_token)
+
+    message = client.messages.create(
+        body=mensagem_texto,
+        from_=from_whatsapp_number,
+        to=to_whatsapp_number
+    )
+
+    return message.sid
+
+ACCOUNT_SID = Parametro.objects.get(parametroChave='ACCOUNT_SID').parametroValor
+AUTH_TOKEN = Parametro.objects.get(parametroChave='AUTH_TOKEN').parametroValor
+FROM_WHATSAPP_NUMBER = Parametro.objects.get(parametroChave='FROM_WHATSAPP_NUMBER').parametroValor
+
+@csrf_exempt
+@api_view(['POST'])
+def enviar_mensagem(request):
+    numero_destino = request.data.get('numero')
+    mensagem_texto = request.data.get('mensagem')
+
+    if not numero_destino or not mensagem_texto:
+        return Response({'erro': 'Campos "numero" e "mensagem" são obrigatórios.'}, status=400)
+
+    try:
+        client = Client(ACCOUNT_SID, AUTH_TOKEN)
+        message = client.messages.create(
+            body=mensagem_texto,
+            from_=FROM_WHATSAPP_NUMBER,
+            to=f'whatsapp:{numero_destino}'
+        )
+        return Response({'status': 'Mensagem enviada', 'sid': message.sid})
+    except Exception as e:
+        return Response({'erro': str(e)}, status=500)
+
+@csrf_exempt
+def webhook_twilio(request):
+    if request.method == "POST":
+        mensagem = request.POST.get("Body")
+        remetente = request.POST.get("From")
+
+        print(f"Mensagem recebida de {remetente}: {mensagem}")
+
+        resposta = f"Olá! Você enviou: {mensagem}"
+
+        # Responder diretamente
+        response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>{resposta}</Message>
+</Response>"""
+        return HttpResponse(response_xml, content_type="application/xml")
+    return HttpResponse("Método não permitido", status=405)

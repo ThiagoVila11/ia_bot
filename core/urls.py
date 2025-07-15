@@ -34,4 +34,7 @@ urlpatterns = [
     path('contextos/<int:id>/excluir/', views.contexto_excluir, name='contexto_excluir'),
     #funções do chatbot
     path('inatividade/', views.mensagem_inatividade, name='mensagem_inatividade'),
+    #twilio urls
+    path('whatsapp/', views.webhook_twilio, name='webhook_twilio'),
+    path('enviar-mensagem/', views.enviar_mensagem, name='enviar-mensagem'),
 ]
