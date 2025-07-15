@@ -600,7 +600,6 @@ def gerar_resposta(request, mensagem, remetente):
             session_id = request.session.get('session_id')  #request.session.session_key
             print(f"ID da sessão atual: {session_id}")
 
-
     if request.session.get('email_usuario') is None:
         request.session['email_usuario'] = "nao@informado.com.br"
 
@@ -624,7 +623,6 @@ def gerar_resposta(request, mensagem, remetente):
                 Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
                 request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
 
-
             print(f"Número de mensagens cliente: {cliente_messages} + {texto_usuario}")
                 
             if Mensagem.objects.filter(session_id=session_id).count() == 1:
@@ -633,13 +631,14 @@ def gerar_resposta(request, mensagem, remetente):
                 Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                 Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                 Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
-                payload = {
-                    "numero": "+5511986266981",  # Número de destino (formato internacional)
-                    "mensagem": f"""🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.
+                resposta_texto = f"""🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.
                                 Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.
                                 Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/
                                 Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"""
+                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                payload = {
+                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "mensagem": resposta_texto
                 }
                 response = requests.post(url, json=payload)
                 print("Status:", response.status_code)
@@ -648,8 +647,26 @@ def gerar_resposta(request, mensagem, remetente):
             
             elif Mensagem.objects.filter(session_id=session_id).count() == 7:
                 Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                resposta_texto = f""""E qual é o seu e-mail para que possamos continuar?"""
+                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                payload = {
+                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "mensagem": resposta_texto
+                }
+                response = requests.post(url, json=payload)
+                print("Status:", response.status_code)
+                print("Resposta:", response.json())
             elif Mensagem.objects.filter(session_id=session_id).count() == 9:
                 Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                resposta_texto = f"""Perfeito! Agora, como posso te ajudar hoje?"""
+                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                payload = {
+                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "mensagem": resposta_texto
+                }
+                response = requests.post(url, json=payload)
+                print("Status:", response.status_code)
+                print("Resposta:", response.json())            
             else:
                 try:
                     vector_dir = "vector_index"
