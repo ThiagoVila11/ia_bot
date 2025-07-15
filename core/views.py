@@ -590,7 +590,7 @@ def enviar_mensagem(request):
         return Response({'erro': str(e)}, status=500)
 
 def gerar_resposta(request, mensagem, remetente):
-    
+    print("Gerando resposta para a mensagem...")
     # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
     if request.session.get('session_id') is None:
             request.session.save()
@@ -608,7 +608,7 @@ def gerar_resposta(request, mensagem, remetente):
         request.session['nome_usuario'] = "Usuário Anônimo"
 
         if request.method == 'POST':
-            #print("Recebendo mensagem do usuário...")
+            print("Recebendo mensagem do usuário...")
             texto_usuario = request.POST.get('mensagem')
             if texto_usuario:
                 Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
@@ -629,9 +629,6 @@ def gerar_resposta(request, mensagem, remetente):
                     
                 if Mensagem.objects.filter(session_id=session_id).count() == 1:
                     Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                    
-
-
                     Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                     Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                     Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
@@ -768,6 +765,7 @@ def webhook_twilio(request):
 
         # Sua lógica de resposta aqui (função que gera a resposta)
         resposta = gerar_resposta(request, mensagem, remetente)
+        print(f"Resposta gerada: {resposta}")
 
         return JsonResponse({"resposta": resposta}, status=200)
 
