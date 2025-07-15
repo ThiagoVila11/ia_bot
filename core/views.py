@@ -744,28 +744,32 @@ def gerar_resposta(request, mensagem, remetente):
 
 @csrf_exempt
 def webhook_twilio(request):
-    if request.method == "POST":
-        try:
-            # Verifica se é JSON
-            if request.content_type == "application/json":
+    if request.method != "POST":
+        return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+    try:
+        # Verifica se o corpo é JSON
+        if request.content_type == "application/json":
+            try:
                 data = json.loads(request.body.decode('utf-8'))
-                mensagem = data.get("Body")
-                remetente = data.get("From")
-            else:
-                mensagem = request.POST.get("Body")
-                remetente = request.POST.get("From")
+            except json.JSONDecodeError:
+                return JsonResponse({"erro": "JSON inválido"}, status=400)
+            mensagem = data.get("Body")
+            remetente = data.get("From")
+        else:
+            # Trata como x-www-form-urlencoded (como o Twilio envia)
+            mensagem = request.POST.get("Body")
+            remetente = request.POST.get("From")
 
-            if not mensagem or not remetente:
-                return JsonResponse({"erro": "Dados incompletos"}, status=400)
+        if not mensagem or not remetente:
+            return JsonResponse({"erro": "Dados incompletos"}, status=400)
 
-            print(f"Mensagem recebida de {remetente}: {mensagem}")
+        print(f"Mensagem recebida de {remetente}: {mensagem}")
 
-            # Integra com sua rotina de resposta
-            resposta = gerar_resposta(request, mensagem, remetente)
+        # Sua lógica de resposta aqui (função que gera a resposta)
+        resposta = gerar_resposta(request, mensagem, remetente)
 
-            return JsonResponse({"resposta": resposta})
+        return JsonResponse({"resposta": resposta}, status=200)
 
-        except json.JSONDecodeError:
-            return JsonResponse({"erro": "JSON inválido"}, status=400)
-
-    return JsonResponse({"erro": "Método não permitido"}, status=405)
+    except Exception as e:
+        return JsonResponse({"erro": str(e)}, status=500)
