@@ -733,7 +733,8 @@ def gerar_resposta(request, mensagem, remetente):
                 
         mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
         print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
-        return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
+        #return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
+        resposta = f"Olá {remetente}, recebi sua mensagem: {resposta_texto}"
 
     resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
     return resposta
