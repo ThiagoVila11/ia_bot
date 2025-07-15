@@ -76,6 +76,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ia_bot.wsgi.application'
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://10.1.10.86:8443",
+    "http://localhost:8003",
+    "http://127.0.0.1:8443",
+]
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
