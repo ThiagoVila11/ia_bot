@@ -1,6 +1,7 @@
 import json
 import os
 import xml.etree.ElementTree as ET
+import requests
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -591,17 +592,201 @@ def enviar_mensagem(request):
 @csrf_exempt
 def webhook_twilio(request):
     if request.method == "POST":
-        mensagem = request.POST.get("Body")
-        remetente = request.POST.get("From")
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            mensagem = data.get("Body")
+            remetente = data.get("From")
 
-        print(f"Mensagem recebida de {remetente}: {mensagem}")
+            print(f"Mensagem recebida de {remetente}: {mensagem}")
 
-        resposta = f"Olá! Você enviou: {mensagem}"
+            resposta = f"Olá! Você enviou: {mensagem}"
 
-        # Responder diretamente
-        response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Message>{resposta}</Message>
-</Response>"""
-        return HttpResponse(response_xml, content_type="application/xml")
-    return HttpResponse("Método não permitido", status=405)
+            # Retorna resposta em JSON
+            return JsonResponse({"resposta": resposta})
+
+        except json.JSONDecodeError:
+            return JsonResponse({"erro": "Formato JSON inválido"}, status=400)
+
+    return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+
+def gerar_resposta(request, mensagem, remetente):
+    
+    # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
+    if request.session.get('session_id') is None:
+            request.session.save()
+            request.session['session_id'] = request.session.session_key
+            print("Sessão criada e ID salvo na sessão.")
+            
+            session_id = request.session.get('session_id')  #request.session.session_key
+            print(f"ID da sessão atual: {session_id}")
+
+
+    if request.session.get('email_usuario') is None:
+        request.session['email_usuario'] = "nao@informado.com.br"
+
+    if request.session.get('nome_usuario') is None:
+        request.session['nome_usuario'] = "Usuário Anônimo"
+
+        if request.method == 'POST':
+            #print("Recebendo mensagem do usuário...")
+            texto_usuario = request.POST.get('mensagem')
+            if texto_usuario:
+                Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                idmensagem = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).last().id
+                print(f"Mensagem do usuário recebida: {texto_usuario} (ID: {idmensagem})")
+                cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
+                nrmsg = Mensagem.objects.filter(session_id=session_id).count()
+                
+                if cliente_messages == 2:
+                    Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
+                    request.session['nome_usuario'] = texto_usuario  # 🔹 salva na sessão
+                elif cliente_messages == 3:
+                    Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
+                    request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
+
+
+                print(f"Número de mensagens cliente: {cliente_messages} + {texto_usuario}")
+                    
+                if Mensagem.objects.filter(session_id=session_id).count() == 1:
+                    Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    
+
+
+                    Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                    payload = {
+                        "numero": "+5511986266981",  # Número de destino (formato internacional)
+                        "mensagem": f"""🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.
+                                    Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.
+                                    Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/
+                                    Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"""
+                    }
+                    response = requests.post(url, json=payload)
+                    print("Status:", response.status_code)
+                    print("Resposta:", response.json())
+                
+                
+                elif Mensagem.objects.filter(session_id=session_id).count() == 7:
+                    Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                elif Mensagem.objects.filter(session_id=session_id).count() == 9:
+                    Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                else:
+                    try:
+                        vector_dir = "vector_index"
+                        if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
+                            resposta_texto = "Erro: índice de conhecimento não encontrado."
+                        else:
+                            #busca contexto no banco de dados
+                            contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
+
+                            #print("Carregando embeddings e índice FAISS...")
+                            openai_key = get_openai_key()
+                            embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
+                            db = FAISS.load_local(
+                                vector_dir,
+                                embeddings,
+                                allow_dangerous_deserialization=True
+                            )
+                            docs = db.similarity_search(texto_usuario, k=8)
+                            contexto = "\n\n".join([doc.page_content for doc in docs])
+
+                            system_prompt = (
+                                            f"""{contexto_escrito}
+                                            Conteúdo base:
+                                            {contexto}
+                                            """)
+                            print(f"Contexto usado: {contexto_escrito}")
+                            client = OpenAI(api_key=openai_key)
+
+                            # Histórico da sessão atual
+                            mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+                            historico = [{"role": "system", "content": system_prompt}]
+
+                            # Trunca para as últimas 15 interações (opcional)
+                            for msg in list(mensagens_anteriores)[-3:]:
+                                historico.append({
+                                    "role": "user" if msg.enviado_por_usuario else "assistant",
+                                    "content": msg.texto
+                                })
+
+                            # Nova mensagem
+                            historico.append({"role": "user", "content": texto_usuario})
+
+                            # Envio para OpenAI
+                            response = client.chat.completions.create(
+                                model="gpt-4",
+                                messages=historico,
+                                temperature=0.9,
+                                #top_p=0.9,
+                                max_tokens=250,
+                                #frequency_penalty=0.3,
+                                #presence_penalty=0.2
+                            )
+                            resposta_texto = response.choices[0].message.content
+                            # Recupera uso de tokens
+                            prompt_tokens = response.usage.prompt_tokens
+                            completion_tokens = response.usage.completion_tokens
+                            total_tokens = response.usage.total_tokens
+
+                            # Calcula custo estimado (valores em dólar para gpt-4 em julho/2025)
+                            # Para gpt-4-turbo use $0.01 e $0.03
+                            prompt_cost = prompt_tokens * 0.001 / 1000
+                            completion_cost = completion_tokens * 0.015 / 1000
+                            total_cost = prompt_cost + completion_cost
+
+                    except Exception as e:
+                        resposta_texto = f"Erro ao gerar resposta: {str(e)}"
+
+                    Mensagem.objects.create(session_id=session_id, texto=resposta_texto, 
+                                            enviado_por_usuario=False, nome=request.session.get('nome_usuario'),
+                                            email=request.session.get('email_usuario'),
+                                            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                                            total_tokens=total_tokens, custo_estimado=total_cost)
+                    
+                    if resposta_texto.lower() in ["encerrar conversa", "sair", "finalizar"]:
+                        Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                        return redirect('chatbot')
+                    
+                    if resposta_texto.lower() == "atendimento humano":
+                        Mensagem.objects.create(session_id=session_id, texto="Encaminhando para atendimento humano...", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                        return redirect('chatbot')
+                    
+        mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+        print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
+        return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
+
+    resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
+    return resposta
+
+
+@csrf_exempt
+def webhook_twilio(request):
+    if request.method == "POST":
+        try:
+            # Verifica se é JSON
+            if request.content_type == "application/json":
+                data = json.loads(request.body.decode('utf-8'))
+                mensagem = data.get("Body")
+                remetente = data.get("From")
+            else:
+                mensagem = request.POST.get("Body")
+                remetente = request.POST.get("From")
+
+            if not mensagem or not remetente:
+                return JsonResponse({"erro": "Dados incompletos"}, status=400)
+
+            print(f"Mensagem recebida de {remetente}: {mensagem}")
+
+            # Integra com sua rotina de resposta
+            resposta = gerar_resposta(request, mensagem, remetente)
+
+            return JsonResponse({"resposta": resposta})
+
+        except json.JSONDecodeError:
+            return JsonResponse({"erro": "JSON inválido"}, status=400)
+
+    return JsonResponse({"erro": "Método não permitido"}, status=405)
