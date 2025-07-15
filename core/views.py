@@ -589,27 +589,6 @@ def enviar_mensagem(request):
     except Exception as e:
         return Response({'erro': str(e)}, status=500)
 
-@csrf_exempt
-def webhook_twilio(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-            mensagem = data.get("Body")
-            remetente = data.get("From")
-
-            print(f"Mensagem recebida de {remetente}: {mensagem}")
-
-            resposta = f"Olá! Você enviou: {mensagem}"
-
-            # Retorna resposta em JSON
-            return JsonResponse({"resposta": resposta})
-
-        except json.JSONDecodeError:
-            return JsonResponse({"erro": "Formato JSON inválido"}, status=400)
-
-    return JsonResponse({"erro": "Método não permitido"}, status=405)
-
-
 def gerar_resposta(request, mensagem, remetente):
     
     # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
