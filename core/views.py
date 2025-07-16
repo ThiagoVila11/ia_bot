@@ -803,19 +803,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 import json
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+import json
+
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
         return HttpResponse("Método não permitido", status=405)
 
     try:
-        # Detecta o tipo de conteúdo
         if request.content_type == "application/json":
             print("📥 Recebendo dados como JSON")
-            try:
-                data = json.loads(request.body.decode("utf-8"))
-            except json.JSONDecodeError:
-                return HttpResponse("JSON inválido", status=400)
+            data = json.loads(request.body.decode('utf-8'))
             mensagem = data.get("Body")
             remetente = data.get("From")
         else:
@@ -828,19 +828,76 @@ def webhook_twilio(request):
 
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
-        request.session['session_id'] = remetente
-        # Geração da resposta com base na mensagem recebida
-        resposta = gerar_resposta(request, mensagem, remetente)
-        print(f"💬 Resposta gerada: {resposta}")
+        resposta = gerar_resposta_twilio(mensagem, remetente)
+        print(f"✅ Resposta gerada: {resposta}")
 
-        # Responde em formato XML (TwiML)
+        # Twilio espera XML
         response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{resposta}</Message>
 </Response>"""
-
         return HttpResponse(response_xml, content_type="application/xml")
 
     except Exception as e:
-        print("❌ Erro no webhook:", str(e))
-        return HttpResponse(f"Erro interno: {str(e)}", status=500)
+        print(f"❌ Erro no webhook: {str(e)}")
+        return HttpResponse("Erro interno no servidor", status=500)
+
+
+def gerar_resposta_twilio(mensagem, remetente):
+    print("Gerando resposta para a mensagem...")
+    print(f"Mensagem recebida: {mensagem}")
+    print(f"Remetente: {remetente}")
+
+    session_id = remetente  # usa o número como identificador
+    nome = "WhatsApp User"
+    email = "whatsapp@cliente.com"
+
+    try:
+        # Salva a mensagem do usuário
+        Mensagem.objects.create(session_id=session_id, texto=mensagem, enviado_por_usuario=True, nome=nome, email=email)
+
+        # Primeira mensagem?
+        if Mensagem.objects.filter(session_id=session_id).count() == 1:
+            boas_vindas = "Olá! Seja bem-vindo à Vila 11. Qual é o seu nome completo?"
+            Mensagem.objects.create(session_id=session_id, texto=boas_vindas, enviado_por_usuario=False, nome=nome, email=email)
+            return boas_vindas
+
+        # Busca contexto
+        contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
+        openai_key = os.getenv("OPENAI_API_KEY")  # ou use sua função get_openai_key()
+
+        embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
+        db = FAISS.load_local("vector_index", embeddings, allow_dangerous_deserialization=True)
+        docs = db.similarity_search(mensagem, k=5)
+        contexto = "\n\n".join([doc.page_content for doc in docs])
+
+        system_prompt = f"""{contexto_escrito}
+        Conteúdo base:
+        {contexto}
+        """
+
+        mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+        historico = [{"role": "system", "content": system_prompt}]
+        for msg in list(mensagens_anteriores)[-3:]:
+            historico.append({
+                "role": "user" if msg.enviado_por_usuario else "assistant",
+                "content": msg.texto
+            })
+
+        historico.append({"role": "user", "content": mensagem})
+
+        client = OpenAI(api_key=openai_key)
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=historico,
+            temperature=0.8,
+            max_tokens=250,
+        )
+
+        resposta_texto = response.choices[0].message.content
+        Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False, nome=nome, email=email)
+        return resposta_texto
+
+    except Exception as e:
+        print("Erro ao gerar resposta Twilio:", str(e))
+        return "Desculpe, algo deu errado ao processar sua mensagem."
