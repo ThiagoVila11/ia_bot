@@ -568,26 +568,32 @@ def excluir_parametro(request, pk):
 
 
 def mensagem_inatividade(request):
-    if request.method == 'POST':
-        session_id = request.session.get('session_id') #request.session.session_key or request.session.save()
-        texto = "Percebi que tem um tempinho que paramos de conversar. Precisa de mais alguma ajuda em nossa conversa?"
+    print("Iniciando mensagem_inatividade...")
+    
+    #if request.method == 'POST':
+    #    session_id = request.session.get('session_id') #request.session.session_key or request.session.save()
+    #    texto = "Percebi que tem um tempinho que paramos de conversar. Precisa de mais alguma ajuda em nossa conversa?"
 
         # Salva no histórico (opcional)
-        Mensagem.objects.create(
-            session_id=session_id,
-            enviado_por_usuario=False,
-            texto=texto,
-            email=request.session.get('email_usuario'),
-            nome=request.session.get('nome_usuario')
-        )   
+    #    Mensagem.objects.create(
+    #        session_id=session_id,
+    #        enviado_por_usuario=False,
+    #        texto=texto,
+    #        email=request.session.get('email_usuario'),
+    #        nome=request.session.get('nome_usuario')
+    #    )   
 
-        return JsonResponse({'texto': texto})
+    #    return JsonResponse({'texto': texto})
     
     
+ACCOUNT_SID = Parametro.objects.get(parametroChave='ACCOUNT_SID').parametroValor
+AUTH_TOKEN = Parametro.objects.get(parametroChave='AUTH_TOKEN').parametroValor
+FROM_WHATSAPP_NUMBER = Parametro.objects.get(parametroChave='FROM_WHATSAPP_NUMBER').parametroValor
+
 def enviar_mensagem(numero_destino, mensagem_texto):
-    account_sid = 'SACa7493a9fd84fe39c5abc3f17a2ee6a7e'
-    auth_token = '2d83bf9cf9a7ee4709af8d88bf9301fe'
-    from_whatsapp_number = 'whatsapp:+14155238886'
+    account_sid = 'ACCOUNT_SID'
+    auth_token = 'AUTH_TOKEN'
+    from_whatsapp_number = 'FROM_WHATSAPP_NUMBER'
     to_whatsapp_number = f'whatsapp:{numero_destino}'
 
     client = Client(account_sid, auth_token)
@@ -599,10 +605,6 @@ def enviar_mensagem(numero_destino, mensagem_texto):
     )
 
     return message.sid
-
-ACCOUNT_SID = Parametro.objects.get(parametroChave='ACCOUNT_SID').parametroValor
-AUTH_TOKEN = Parametro.objects.get(parametroChave='AUTH_TOKEN').parametroValor
-FROM_WHATSAPP_NUMBER = Parametro.objects.get(parametroChave='FROM_WHATSAPP_NUMBER').parametroValor
 
 @csrf_exempt
 @api_view(['POST'])
@@ -678,7 +680,7 @@ def gerar_resposta(request, mensagem, remetente):
                                 Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.
                                 Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/
                                 Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"""
-                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
                     "numero": "+5511986266981",  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
@@ -691,7 +693,7 @@ def gerar_resposta(request, mensagem, remetente):
             elif Mensagem.objects.filter(session_id=session_id).count() == 7:
                 Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                 resposta_texto = f""""E qual é o seu e-mail para que possamos continuar?"""
-                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
                     "numero": "+5511986266981",  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
@@ -702,7 +704,7 @@ def gerar_resposta(request, mensagem, remetente):
             elif Mensagem.objects.filter(session_id=session_id).count() == 9:
                 Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                 resposta_texto = f"""Perfeito! Agora, como posso te ajudar hoje?"""
-                url = "http://10.1.10.86:8003/enviar-mensagem/"  # Troque pelo seu endereço
+                url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
                     "numero": "+5511986266981",  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
@@ -785,18 +787,49 @@ def gerar_resposta(request, mensagem, remetente):
                 
                 if resposta_texto.lower() in ["encerrar conversa", "sair", "finalizar"]:
                     Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
+                    payload = {
+                        "numero": "+5511986266981",  # Número de destino (formato internacional)
+                        "mensagem": resposta_texto
+                    }
+                    response = requests.post(url, json=payload)
+                    print("Status:", response.status_code)
+                    print("Resposta:", response.json())  
                     return redirect('chatbot')
                 
                 if resposta_texto.lower() == "atendimento humano":
                     Mensagem.objects.create(session_id=session_id, texto="Encaminhando para atendimento humano...", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+                    payload = {
+                        "numero": "+5511986266981",  # Número de destino (formato internacional)
+                        "mensagem": resposta_texto
+                    }
+                    response = requests.post(url, json=payload)
+                    print("Status:", response.status_code)
+                    print("Resposta:", response.json())                      
                     return redirect('chatbot')
                 
         mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
         print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
         #return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
-        resposta = f"Olá {remetente}, recebi sua mensagem: {resposta_texto}"
+        #resposta = f"Olá {remetente}, recebi sua mensagem: {resposta_texto}"
+        payload = {
+            "numero": "+5511986266981",  # Número de destino (formato internacional)
+            "mensagem": resposta_texto
+        }
+        response = requests.post(url, json=payload)
+        print("Status:", response.status_code)
+        print("Resposta:", response.json())  
+        resposta = resposta_texto
 
-    resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
+    #resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
+    payload = {
+        "numero": "+5511986266981",  # Número de destino (formato internacional)
+        "mensagem": resposta_texto
+    }
+    response = requests.post(url, json=payload)
+    print("Status:", response.status_code)
+    print("Resposta:", response.json())  
+    resposta = resposta_texto
     return resposta
 
 # core/views.py
@@ -825,6 +858,7 @@ def webhook_twilio(request):
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
         # Mensagem de resposta
+        gerar_resposta(request, mensagem, remetente)
         resposta_texto = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
         resposta_segura = saxutils.escape(resposta_texto)  # Escapa XML
 
