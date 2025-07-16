@@ -628,9 +628,11 @@ def gerar_resposta(request, mensagem, remetente):
     print("Gerando resposta para a mensagem...")
     print(f"Mensagem recebida: {mensagem}")
     print(f"Remetente: {remetente}")
-    print(f"ID da sessão atual: {session_id}")
+    
 
     session_id = remetente.replace("whatsapp:", "")
+
+    print(f"ID da sessão atual: {session_id}")
     # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
     #if request.session.get('session_id') is None:
     #        #request.session.save()
