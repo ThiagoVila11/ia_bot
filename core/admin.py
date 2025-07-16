@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Parametro, Contexto, Mensagem
+from .models import Parametro, Contexto, Mensagem, Consultor, lead
 
 @admin.register(Parametro)
 class ParametroAdmin(admin.ModelAdmin):
@@ -17,3 +17,13 @@ class MensagemAdmin(admin.ModelAdmin):
                     'nome', 'email', 'prompt_tokens', 'completion_tokens',
                     'total_tokens', 'custo_estimado')
     search_fields = ('texto', 'nome', 'email', 'session_id')
+
+@admin.register(Consultor)
+class ConsultorAdmin(admin.ModelAdmin):
+    list_display = ('consultorNome', 'consultorEmail', 'consultorTelefone', 'consultorAtivo')
+    search_fields = ('consultorNome', 'consultorEmail', 'consultorTelefone', 'consultorAtivo')
+
+@admin.register(lead)
+class leadAdmin(admin.ModelAdmin):
+    list_display = ('leadNome', 'leadEmail', 'leadTelefone', 'leadDataHoraCriacao', 'leadAtivo', 'leadConsultor', 'leadIntegrado')
+    search_fields = ('leadNome', 'leadEmail', 'leadTelefone')

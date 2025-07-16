@@ -17,7 +17,7 @@ from .models import Mensagem
 from openai import OpenAI
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Parametro, Contexto
+from .models import Parametro, Contexto, Consultor, lead
 from .forms import ParametroForm, MensagemForm, ContextoForm
 from django.db.models import Max, Sum
 from django.contrib import messages
@@ -532,6 +532,41 @@ def excluir_parametro(request, pk):
         return redirect('listar_parametros')
     return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})
 
+# Consultor CRUD
+def listar_consultor(request):
+    consultor = Consultor.objects.all()
+    return render(request, 'consultor/listar.html', {'consultor': consultor})
+
+def adicionar_consultor(request):
+    if request.method == 'POST':
+        form = ParametroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_parametros')
+    else:
+        form = ParametroForm()
+    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Adicionar Parâmetro'})
+
+def alterar_parametro(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == 'POST':
+        form = ParametroForm(request.POST, instance=parametro)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_parametros')
+    else:
+        form = ParametroForm(instance=parametro)
+    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Alterar Parâmetro'})
+
+def excluir_parametro(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == 'POST':
+        parametro.delete()
+        return redirect('listar_parametros')
+    return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})
+
+
+
 def mensagem_inatividade(request):
     if request.method == 'POST':
         session_id = request.session.get('session_id') #request.session.session_key or request.session.save()
@@ -759,36 +794,47 @@ def gerar_resposta(request, mensagem, remetente):
     resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
     return resposta
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, JsonResponse
+import json
 
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
-        return JsonResponse({"erro": "Método não permitido"}, status=405)
+        return HttpResponse("Método não permitido", status=405)
 
     try:
-        # Verifica se o corpo é JSON
+        # Detecta o tipo de conteúdo
         if request.content_type == "application/json":
+            print("📥 Recebendo dados como JSON")
             try:
-                data = json.loads(request.body.decode('utf-8'))
+                data = json.loads(request.body.decode("utf-8"))
             except json.JSONDecodeError:
-                return JsonResponse({"erro": "JSON inválido"}, status=400)
+                return HttpResponse("JSON inválido", status=400)
             mensagem = data.get("Body")
             remetente = data.get("From")
         else:
-            # Trata como x-www-form-urlencoded (como o Twilio envia)
+            print("📥 Recebendo dados como x-www-form-urlencoded")
             mensagem = request.POST.get("Body")
             remetente = request.POST.get("From")
 
         if not mensagem or not remetente:
-            return JsonResponse({"erro": "Dados incompletos"}, status=400)
+            return HttpResponse("Dados incompletos", status=400)
 
-        print(f"Mensagem recebida de {remetente}: {mensagem}")
+        print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
-        # Sua lógica de resposta aqui (função que gera a resposta)
+        # Geração da resposta com base na mensagem recebida
         resposta = gerar_resposta(request, mensagem, remetente)
-        print(f"Resposta gerada: {resposta}")
+        print(f"💬 Resposta gerada: {resposta}")
 
-        return JsonResponse({"resposta": resposta}, status=200)
+        # Responde em formato XML (TwiML)
+        response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Message>{resposta}</Message>
+</Response>"""
+
+        return HttpResponse(response_xml, content_type="application/xml")
 
     except Exception as e:
-        return JsonResponse({"erro": str(e)}, status=500)
+        print("❌ Erro no webhook:", str(e))
+        return HttpResponse(f"Erro interno: {str(e)}", status=500)

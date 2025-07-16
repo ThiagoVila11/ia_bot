@@ -38,10 +38,10 @@ class Parametro(models.Model):
         verbose_name_plural = "Parâmetros"
 
 class Consultor(models.Model):
-    consultorNome = models.CharField(max_length=100)
-    consultorEmail = models.EmailField(unique=True)
-    consultorTelefone = models.CharField(max_length=15, blank=True, null=True)
-    consultorAtivo = models.BooleanField(default=True)
+    consultorNome = models.CharField(verbose_name='Nome', max_length=100)
+    consultorEmail = models.EmailField(verbose_name='Email', unique=True)
+    consultorTelefone = models.CharField(verbose_name='Telefone', max_length=15, blank=True, null=True)
+    consultorAtivo = models.BooleanField(verbose_name='Ativo', default=True)
 
     def __str__(self):
         return self.nome
@@ -63,3 +63,19 @@ class Conversa(models.Model):
     class Meta:
         verbose_name = "Conversa"
         verbose_name_plural = "Conversas"
+
+class lead(models.Model):
+    leadNome = models.CharField(verbose_name='Nome', max_length=100)
+    leadEmail = models.EmailField(verbose_name='Email', unique=True)
+    leadTelefone = models.CharField(verbose_name='Telefone', max_length=15, blank=True, null=True)
+    leadDataHoraCriacao = models.DateTimeField('Data/Hora criação do lead', auto_now_add=True)
+    leadAtivo = models.BooleanField(verbose_name='Ativo', default=True)
+    leadConsultor = models.ForeignKey(Consultor, verbose_name='Consultor', on_delete=models.CASCADE, related_name='leads', blank=True, null=True)
+    leadIntegrado = models.BooleanField(default=False, verbose_name="Integrado com CRM")
+
+    def __str__(self):
+        return self.leadNome
+
+    class Meta:
+        verbose_name = "Lead"
+        verbose_name_plural = "Leads"

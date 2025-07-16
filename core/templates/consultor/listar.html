@@ -1,0 +1,42 @@
+{% extends 'chat/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white shadow rounded">
+    <div class="flex justify-between mb-4">
+        <h2 class="text-2xl font-bold">Consultores</h2>
+        <a href="{% url 'adicionar_parametro' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Adicionar</a>
+    </div>
+    <table class="w-full table-auto">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2">Nome</th>
+                <th class="px-4 py-2">Email</th>
+                <th class="px-4 py-2">Telefone</th>
+                <th class="px-4 py-2">Ativo</th>
+                <th class="px-4 py-2">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in Consultores %}
+            <tr class="border-t">
+                <td class="px-4 py-2 font-mono">{{ c.consultorNome }}</td>
+                <td class="px-4 py-2">{{c.consultorEmail }}</td>
+                <td class="px-4 py-2">{{ c.consultorTelefone }}</td>
+                <td class="px-4 py-2">
+                    <span class="inline-block px-2 py-1 rounded {{ c.consultorAtivo|yesno:'bg-green-100 text-green-800, bg-red-100 text-red-800' }}">
+                        {{ c.consultorAtivo|yesno:'Ativo,Inativo' }}
+                    </span>
+                <td class="px-4 py-2 space-x-2">
+                    <a href="{% url 'alterar_parametro' p.pk %}" class="text-blue-600 hover:underline">Editar</a>
+                    <a href="{% url 'excluir_parametro' p.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center text-gray-500 py-4">Nenhum consultor encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

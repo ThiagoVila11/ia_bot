@@ -27,11 +27,14 @@ urlpatterns = [
     path('sessoes/', views.lista_sessoes, name='lista_sessoes'),
     path('ver_conversa/<str:session_id>/', views.ver_conversa, name='ver_conversa'),
     path('enviar_conversa/<str:session_id>/', views.enviar_conversa, name='enviar_conversa'),
+    #contextos urls
     path('contextos/', views.listar_contextos, name='listar_contextos'),
     path('contextos/adicionar/', views.contexto_adicionar, name='contexto_adicionar'),
     path('contextos/<int:id>/', views.contexto_consultar, name='contexto_consultar'),
     path('contextos/<int:id>/alterar/', views.contexto_alterar, name='contexto_alterar'),
     path('contextos/<int:id>/excluir/', views.contexto_excluir, name='contexto_excluir'),
+    # Consultor URLs
+    path('consultores/', views.listar_consultor, name='listar_consultor'),
     #funções do chatbot
     path('inatividade/', views.mensagem_inatividade, name='mensagem_inatividade'),
     #twilio urls
