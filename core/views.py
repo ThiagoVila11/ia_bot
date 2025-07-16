@@ -629,14 +629,16 @@ def gerar_resposta(request, mensagem, remetente):
     print(f"Mensagem recebida: {mensagem}")
     print(f"Remetente: {remetente}")
     print(f"ID da sessão atual: {session_id}")
+
+    session_id = remetente.replace("whatsapp:", "")
     # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
-    if request.session.get('session_id') is None:
-            #request.session.save()
-            request.session['session_id'] = remetente #request.session.session_key
-            print("Sessão criada e ID salvo na sessão.")
-            
-            session_id = request.session.get('session_id')  #request.session.session_key
-            print(f"ID da sessão atual: {session_id}")
+    #if request.session.get('session_id') is None:
+    #        #request.session.save()
+    #        request.session['session_id'] = remetente #request.session.session_key
+    #        print("Sessão criada e ID salvo na sessão.")
+    #        
+    #        session_id = request.session.get('session_id')  #request.session.session_key
+    #        print(f"ID da sessão atual: {session_id}")
 
     if request.session.get('email_usuario') is None:
         request.session['email_usuario'] = "nao@informado.com.br"
