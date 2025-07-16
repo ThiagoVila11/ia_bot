@@ -799,33 +799,45 @@ def gerar_resposta(request, mensagem, remetente):
     resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
     return resposta
 
+# core/views.py
+import xml.sax.saxutils as saxutils
+
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
         return HttpResponse("Método não permitido", status=405)
 
     try:
-        print("📥 Recebendo dados como x-www-form-urlencoded")
-        mensagem = request.POST.get("Body")
-        remetente = request.POST.get("From")
+        # Detecta tipo de conteúdo
+        if request.content_type == "application/json":
+            print("📥 Recebendo dados como JSON (API)")
+            data = json.loads(request.body.decode("utf-8"))
+            mensagem = data.get("Body")
+            remetente = data.get("From")
+        else:
+            print("📥 Recebendo dados como x-www-form-urlencoded (Twilio WhatsApp)")
+            mensagem = request.POST.get("Body")
+            remetente = request.POST.get("From")
 
         if not mensagem or not remetente:
             return HttpResponse("Dados incompletos", status=400)
 
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
-        resposta = 'teste teste' #gerar_resposta(request, mensagem, remetente)
-        print(f"✅ Resposta gerada: {resposta}")
+        # Mensagem de resposta
+        resposta_texto = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
+        resposta_segura = saxutils.escape(resposta_texto)  # Escapa XML
 
-        # Twilio espera XML
         response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Message>{resposta}</Message>
+    <Message>{resposta_segura}</Message>
 </Response>"""
-        print(response_xml) 
+
+        print("✅ Respondendo com XML:")
+        print(response_xml)
         return HttpResponse(response_xml, content_type="application/xml")
-        
 
     except Exception as e:
         print(f"❌ Erro no webhook: {str(e)}")
         return HttpResponse("Erro interno no servidor", status=500)
+
