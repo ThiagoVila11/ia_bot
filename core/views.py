@@ -682,7 +682,7 @@ def gerar_resposta(request, mensagem, remetente):
                                 Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"""
                 url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
-                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "numero": session_id,  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
                 }
                 response = requests.post(url, json=payload)
@@ -695,7 +695,7 @@ def gerar_resposta(request, mensagem, remetente):
                 resposta_texto = f""""E qual é o seu e-mail para que possamos continuar?"""
                 url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
-                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "numero": session_id,  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
                 }
                 response = requests.post(url, json=payload)
@@ -706,7 +706,7 @@ def gerar_resposta(request, mensagem, remetente):
                 resposta_texto = f"""Perfeito! Agora, como posso te ajudar hoje?"""
                 url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                 payload = {
-                    "numero": "+5511986266981",  # Número de destino (formato internacional)
+                    "numero": session_id,  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
                 }
                 response = requests.post(url, json=payload)
@@ -789,7 +789,7 @@ def gerar_resposta(request, mensagem, remetente):
                     Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                     url = "https://inloco.vila11.com.br/enviar-mensagem/"  # Troque pelo seu endereço
                     payload = {
-                        "numero": "+5511986266981",  # Número de destino (formato internacional)
+                        "numero": session_id,  # Número de destino (formato internacional)
                         "mensagem": resposta_texto
                     }
                     response = requests.post(url, json=payload)
@@ -800,7 +800,7 @@ def gerar_resposta(request, mensagem, remetente):
                 if resposta_texto.lower() == "atendimento humano":
                     Mensagem.objects.create(session_id=session_id, texto="Encaminhando para atendimento humano...", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
                     payload = {
-                        "numero": "+5511986266981",  # Número de destino (formato internacional)
+                        "numero": session_id,  # Número de destino (formato internacional)
                         "mensagem": resposta_texto
                     }
                     response = requests.post(url, json=payload)
@@ -813,7 +813,7 @@ def gerar_resposta(request, mensagem, remetente):
         #return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
         #resposta = f"Olá {remetente}, recebi sua mensagem: {resposta_texto}"
         payload = {
-            "numero": "+5511986266981",  # Número de destino (formato internacional)
+            "numero": session_id,  # Número de destino (formato internacional)
             "mensagem": resposta_texto
         }
         response = requests.post(url, json=payload)
@@ -823,7 +823,7 @@ def gerar_resposta(request, mensagem, remetente):
 
     #resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
     payload = {
-        "numero": "+5511986266981",  # Número de destino (formato internacional)
+        "numero": session_id,  # Número de destino (formato internacional)
         "mensagem": resposta_texto
     }
     response = requests.post(url, json=payload)
