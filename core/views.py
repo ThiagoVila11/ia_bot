@@ -628,6 +628,7 @@ def gerar_resposta(request, mensagem, remetente):
     print("Gerando resposta para a mensagem...")
     print(f"Mensagem recebida: {mensagem}")
     print(f"Remetente: {remetente}")
+    print(f"ID da sessão atual: {session_id}")
     # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
     if request.session.get('session_id') is None:
             #request.session.save()
@@ -822,7 +823,7 @@ def webhook_twilio(request):
             return HttpResponse("Dados incompletos", status=400)
 
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
-        
+
         request.session['session_id'] = remetente
         # Geração da resposta com base na mensagem recebida
         resposta = gerar_resposta(request, mensagem, remetente)
