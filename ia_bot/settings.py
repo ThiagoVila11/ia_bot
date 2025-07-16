@@ -79,7 +79,9 @@ WSGI_APPLICATION = 'ia_bot.wsgi.application'
 CSRF_TRUSTED_ORIGINS = [
     "https://10.1.10.86:8443",
     "https://10.1.10.86:443",
+    "https://10.1.10.86",
     "https://189.112.8.89:443",
+    "https://189.112.8.89",
     "http://localhost:8003",
     "http://127.0.0.1:8443",
 ]
