@@ -814,7 +814,7 @@ def webhook_twilio(request):
 
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
-        resposta = gerar_resposta_twilio(mensagem, remetente)
+        resposta = gerar_resposta(mensagem, remetente)
         print(f"✅ Resposta gerada: {resposta}")
 
         # Twilio espera XML
@@ -822,109 +822,10 @@ def webhook_twilio(request):
 <Response>
     <Message>{resposta}</Message>
 </Response>"""
+        print(response_xml) 
         return HttpResponse(response_xml, content_type="application/xml")
+        
 
     except Exception as e:
         print(f"❌ Erro no webhook: {str(e)}")
         return HttpResponse("Erro interno no servidor", status=500)
-
-
-def gerar_resposta_twilio(mensagem, remetente):
-    print("Gerando resposta para a mensagem via Twilio...")
-    print(f"Mensagem recebida: {mensagem}")
-    print(f"Remetente: {remetente}")
-
-    session_id = remetente.replace("whatsapp:", "")
-    nome_usuario = "Usuário WhatsApp"
-    email_usuario = "nao@informado.com.br"
-
-    texto_usuario = mensagem
-    if texto_usuario:
-        Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True,
-                                nome=nome_usuario, email=email_usuario)
-
-        cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
-        total_msgs = Mensagem.objects.filter(session_id=session_id).count()
-
-        if cliente_messages == 2:
-            Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
-            nome_usuario = texto_usuario
-
-        elif cliente_messages == 3:
-            Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
-            email_usuario = texto_usuario
-
-        if total_msgs == 1:
-            mensagens_padrao = [
-                "Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).",
-                "🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.",
-                "Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.",
-                "Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/",
-                "Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"
-            ]
-            for msg in mensagens_padrao:
-                Mensagem.objects.create(session_id=session_id, texto=msg, enviado_por_usuario=False,
-                                        nome=nome_usuario, email=email_usuario)
-            return mensagens_padrao[-1]  # última mensagem enviada
-
-        elif total_msgs == 7:
-            resposta_texto = "E qual é o seu e-mail para que possamos continuar?"
-            Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
-                                    nome=nome_usuario, email=email_usuario)
-            return resposta_texto
-
-        elif total_msgs == 9:
-            resposta_texto = "Perfeito! Agora, como posso te ajudar hoje?"
-            Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
-                                    nome=nome_usuario, email=email_usuario)
-            return resposta_texto
-
-        else:
-            try:
-                vector_dir = "vector_index"
-                if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
-                    resposta_texto = "Erro: índice de conhecimento não encontrado."
-                else:
-                    contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
-                    openai_key = get_openai_key()
-                    embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-                    db = FAISS.load_local(vector_dir, embeddings, allow_dangerous_deserialization=True)
-                    docs = db.similarity_search(texto_usuario, k=8)
-                    contexto = "\n\n".join([doc.page_content for doc in docs])
-
-                    system_prompt = f"""{contexto_escrito}\nConteúdo base:\n{contexto}"""
-                    mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
-                    historico = [{"role": "system", "content": system_prompt}]
-                    for msg in list(mensagens_anteriores)[-3:]:
-                        historico.append({
-                            "role": "user" if msg.enviado_por_usuario else "assistant",
-                            "content": msg.texto
-                        })
-                    historico.append({"role": "user", "content": texto_usuario})
-
-                    client = OpenAI(api_key=openai_key)
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=historico,
-                        temperature=0.9,
-                        max_tokens=250
-                    )
-                    resposta_texto = response.choices[0].message.content
-                    prompt_tokens = response.usage.prompt_tokens
-                    completion_tokens = response.usage.completion_tokens
-                    total_tokens = response.usage.total_tokens
-                    prompt_cost = prompt_tokens * 0.001 / 1000
-                    completion_cost = completion_tokens * 0.015 / 1000
-                    total_cost = prompt_cost + completion_cost
-
-                    Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
-                                            nome=nome_usuario, email=email_usuario,
-                                            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
-                                            total_tokens=total_tokens, custo_estimado=total_cost)
-
-                    return resposta_texto
-
-            except Exception as e:
-                return f"Erro ao gerar resposta: {str(e)}"
-
-    return "Não entendi sua mensagem. Pode repetir, por favor?"
