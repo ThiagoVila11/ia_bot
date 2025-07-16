@@ -799,29 +799,15 @@ def gerar_resposta(request, mensagem, remetente):
     resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
     return resposta
 
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, JsonResponse
-import json
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
-import json
-
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
         return HttpResponse("Método não permitido", status=405)
 
     try:
-        if request.content_type == "application/json":
-            print("📥 Recebendo dados como JSON")
-            data = json.loads(request.body.decode('utf-8'))
-            mensagem = data.get("Body")
-            remetente = data.get("From")
-        else:
-            print("📥 Recebendo dados como x-www-form-urlencoded")
-            mensagem = request.POST.get("Body")
-            remetente = request.POST.get("From")
+        print("📥 Recebendo dados como x-www-form-urlencoded")
+        mensagem = request.POST.get("Body")
+        remetente = request.POST.get("From")
 
         if not mensagem or not remetente:
             return HttpResponse("Dados incompletos", status=400)
@@ -844,60 +830,101 @@ def webhook_twilio(request):
 
 
 def gerar_resposta_twilio(mensagem, remetente):
-    print("Gerando resposta para a mensagem...")
+    print("Gerando resposta para a mensagem via Twilio...")
     print(f"Mensagem recebida: {mensagem}")
     print(f"Remetente: {remetente}")
 
-    session_id = remetente  # usa o número como identificador
-    nome = "WhatsApp User"
-    email = "whatsapp@cliente.com"
+    session_id = remetente.replace("whatsapp:", "")
+    nome_usuario = "Usuário WhatsApp"
+    email_usuario = "nao@informado.com.br"
 
-    try:
-        # Salva a mensagem do usuário
-        Mensagem.objects.create(session_id=session_id, texto=mensagem, enviado_por_usuario=True, nome=nome, email=email)
+    texto_usuario = mensagem
+    if texto_usuario:
+        Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True,
+                                nome=nome_usuario, email=email_usuario)
 
-        # Primeira mensagem?
-        if Mensagem.objects.filter(session_id=session_id).count() == 1:
-            boas_vindas = "Olá! Seja bem-vindo à Vila 11. Qual é o seu nome completo?"
-            Mensagem.objects.create(session_id=session_id, texto=boas_vindas, enviado_por_usuario=False, nome=nome, email=email)
-            return boas_vindas
+        cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
+        total_msgs = Mensagem.objects.filter(session_id=session_id).count()
 
-        # Busca contexto
-        contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
-        openai_key = os.getenv("OPENAI_API_KEY")  # ou use sua função get_openai_key()
+        if cliente_messages == 2:
+            Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
+            nome_usuario = texto_usuario
 
-        embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-        db = FAISS.load_local("vector_index", embeddings, allow_dangerous_deserialization=True)
-        docs = db.similarity_search(mensagem, k=5)
-        contexto = "\n\n".join([doc.page_content for doc in docs])
+        elif cliente_messages == 3:
+            Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
+            email_usuario = texto_usuario
 
-        system_prompt = f"""{contexto_escrito}
-        Conteúdo base:
-        {contexto}
-        """
+        if total_msgs == 1:
+            mensagens_padrao = [
+                "Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).",
+                "🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.",
+                "Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.",
+                "Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/",
+                "Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"
+            ]
+            for msg in mensagens_padrao:
+                Mensagem.objects.create(session_id=session_id, texto=msg, enviado_por_usuario=False,
+                                        nome=nome_usuario, email=email_usuario)
+            return mensagens_padrao[-1]  # última mensagem enviada
 
-        mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
-        historico = [{"role": "system", "content": system_prompt}]
-        for msg in list(mensagens_anteriores)[-3:]:
-            historico.append({
-                "role": "user" if msg.enviado_por_usuario else "assistant",
-                "content": msg.texto
-            })
+        elif total_msgs == 7:
+            resposta_texto = "E qual é o seu e-mail para que possamos continuar?"
+            Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
+                                    nome=nome_usuario, email=email_usuario)
+            return resposta_texto
 
-        historico.append({"role": "user", "content": mensagem})
+        elif total_msgs == 9:
+            resposta_texto = "Perfeito! Agora, como posso te ajudar hoje?"
+            Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
+                                    nome=nome_usuario, email=email_usuario)
+            return resposta_texto
 
-        client = OpenAI(api_key=openai_key)
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=historico,
-            temperature=0.8,
-            max_tokens=250,
-        )
+        else:
+            try:
+                vector_dir = "vector_index"
+                if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
+                    resposta_texto = "Erro: índice de conhecimento não encontrado."
+                else:
+                    contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
+                    openai_key = get_openai_key()
+                    embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
+                    db = FAISS.load_local(vector_dir, embeddings, allow_dangerous_deserialization=True)
+                    docs = db.similarity_search(texto_usuario, k=8)
+                    contexto = "\n\n".join([doc.page_content for doc in docs])
 
-        resposta_texto = response.choices[0].message.content
-        Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False, nome=nome, email=email)
-        return resposta_texto
+                    system_prompt = f"""{contexto_escrito}\nConteúdo base:\n{contexto}"""
+                    mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
+                    historico = [{"role": "system", "content": system_prompt}]
+                    for msg in list(mensagens_anteriores)[-3:]:
+                        historico.append({
+                            "role": "user" if msg.enviado_por_usuario else "assistant",
+                            "content": msg.texto
+                        })
+                    historico.append({"role": "user", "content": texto_usuario})
 
-    except Exception as e:
-        print("Erro ao gerar resposta Twilio:", str(e))
-        return "Desculpe, algo deu errado ao processar sua mensagem."
+                    client = OpenAI(api_key=openai_key)
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=historico,
+                        temperature=0.9,
+                        max_tokens=250
+                    )
+                    resposta_texto = response.choices[0].message.content
+                    prompt_tokens = response.usage.prompt_tokens
+                    completion_tokens = response.usage.completion_tokens
+                    total_tokens = response.usage.total_tokens
+                    prompt_cost = prompt_tokens * 0.001 / 1000
+                    completion_cost = completion_tokens * 0.015 / 1000
+                    total_cost = prompt_cost + completion_cost
+
+                    Mensagem.objects.create(session_id=session_id, texto=resposta_texto, enviado_por_usuario=False,
+                                            nome=nome_usuario, email=email_usuario,
+                                            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                                            total_tokens=total_tokens, custo_estimado=total_cost)
+
+                    return resposta_texto
+
+            except Exception as e:
+                return f"Erro ao gerar resposta: {str(e)}"
+
+    return "Não entendi sua mensagem. Pode repetir, por favor?"
