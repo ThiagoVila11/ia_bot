@@ -814,7 +814,7 @@ def webhook_twilio(request):
 
         print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
 
-        resposta = gerar_resposta(request, mensagem, remetente)
+        resposta = 'teste teste' #gerar_resposta(request, mensagem, remetente)
         print(f"✅ Resposta gerada: {resposta}")
 
         # Twilio espera XML
