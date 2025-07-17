@@ -2,6 +2,8 @@ import json
 import os
 import xml.etree.ElementTree as ET
 import requests
+import uuid
+import subprocess
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -868,21 +870,34 @@ def webhook_twilio(request):
         if num_media > 0 and media_type and "audio" in media_type:
             print(f"🎤 Áudio recebido de {remetente}. Tipo: {media_type}")
             
-            # Baixa o áudio
+            extensao = media_type.split("/")[-1]  # ex: "ogg"
+            uid = uuid.uuid4().hex
+            input_path = f"/tmp/audio_input_{uid}.{extensao}"
+            output_path = f"/tmp/audio_convertido_{uid}.mp3"
+
+            print(f"📥 Baixando áudio de {media_url} como {input_path}")
             audio_response = requests.get(media_url)
-            extensao = media_type.split("/")[-1]  # por exemplo, "ogg" ou "webm"
-            print(f"📥 Baixando áudio de {media_url} com extensão {extensao}")
-            filename = f"/tmp/audio_mensagem.{extensao}"
-            #filename = "/tmp/audio_mensagem.ogg"
-            with open(filename, "wb") as f:
+            with open(input_path, "wb") as f:
                 f.write(audio_response.content)
 
-            # Transcreve com Whisper
-            openai_key = get_openai_key()
-            print(f"Chave outra func OpenAI usada: {openai_key}")
-            client = OpenAI(api_key=openai_key)
-            with open(filename, "rb") as audio_file:
-                transcription = client.audio.transcriptions.create(
+            # 🔄 Converte para MP3 (formato aceito pelo Whisper)
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-i", input_path, "-ar", "16000", "-ac", "1", output_path],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            except subprocess.CalledProcessError:
+                print("❌ Erro ao converter áudio com ffmpeg.")
+                return HttpResponse("Erro ao converter áudio", status=500)
+
+            # 🔑 Chave e transcrição via Whisper
+            openai.api_key = get_openai_key()
+            print(f"Chave OpenAI usada: {openai.api_key}")
+
+            with open(output_path, "rb") as audio_file:
+                transcription = openai.Audio.transcribe(
                     model="whisper-1",
                     file=audio_file,
                     response_format="text"
@@ -891,16 +906,19 @@ def webhook_twilio(request):
             mensagem = transcription.strip()
             print(f"📝 Transcrição de {remetente}: {mensagem}")
 
+            # Limpa arquivos temporários
+            os.remove(input_path)
+            os.remove(output_path)
+
         elif not mensagem:
             return HttpResponse("Nenhuma mensagem ou mídia processável", status=400)
 
-        # Processa normalmente a mensagem (texto ou transcrição de áudio)
+        # ✅ Processa a mensagem normalmente (texto ou voz)
         print(f"✅ Mensagem final de {remetente}: {mensagem}")
 
-        # Aqui você chama sua função de processamento:
+        # Aqui você chama sua função:
         gerar_resposta(request, mensagem, remetente)
 
-        # Resposta padrão
         resposta_texto = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
         resposta_segura = saxutils.escape(resposta_texto)
 
