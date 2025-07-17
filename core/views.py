@@ -838,8 +838,6 @@ def gerar_resposta(request, mensagem, remetente):
     resposta = resposta_texto
     return resposta
 
-# core/views.py
-client = get_openai_key()
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
@@ -877,6 +875,9 @@ def webhook_twilio(request):
                 f.write(audio_response.content)
 
             # Transcreve com Whisper
+            openai_key = get_openai_key()
+            print(f"Chave outra func OpenAI usada: {openai_key}")
+            client = OpenAI(api_key=openai_key)
             with open(filename, "rb") as audio_file:
                 transcription = client.audio.transcriptions.create(
                     model="whisper-1",
