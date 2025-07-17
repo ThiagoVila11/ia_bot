@@ -535,21 +535,6 @@ def excluir_parametro(request, pk):
         return redirect('listar_parametros')
     return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})
 
-# Consultor CRUD
-def listar_consultor(request):
-    consultor = Consultor.objects.all()
-    return render(request, 'consultor/listar.html', {'consultor': consultor})
-
-def adicionar_consultor(request):
-    if request.method == 'POST':
-        form = ParametroForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_parametros')
-    else:
-        form = ParametroForm()
-    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Adicionar Parâmetro'})
-
 def alterar_parametro(request, pk):
     parametro = get_object_or_404(Parametro, pk=pk)
     if request.method == 'POST':
@@ -568,7 +553,25 @@ def excluir_parametro(request, pk):
         return redirect('listar_parametros')
     return render(request, 'parametros/confirmar_exclusao.html', {'parametro': parametro})
 
+# Consultor CRUD
+def listar_consultor(request):
+    consultor = Consultor.objects.all()
+    return render(request, 'consultor/listar.html', {'consultor': consultor})
 
+def adicionar_consultor(request):
+    if request.method == 'POST':
+        form = ParametroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_parametros')
+    else:
+        form = ParametroForm()
+    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Adicionar Parâmetro'})
+
+# Leads CRUD
+def listar_leads(request):
+    leads = lead.objects.all()
+    return render(request, 'lead/listar.html', {'parametros': leads})
 
 def mensagem_inatividade(request):
     print("Iniciando mensagem_inatividade...")
@@ -713,8 +716,6 @@ def gerar_resposta(request, mensagem, remetente):
                     "mensagem": resposta_texto
                 }
                 response = requests.post(url, json=payload)
-                print("Status:", response.status_code)
-                print("Resposta:", response.json()) 
                 #grava o lead
                 lead.objects.create(
                     session_id=session_id,
@@ -802,8 +803,6 @@ def gerar_resposta(request, mensagem, remetente):
                         "mensagem": resposta_texto
                     }
                     response = requests.post(url, json=payload)
-                    print("Status:", response.status_code)
-                    print("Resposta:", response.json())  
                     return redirect('chatbot')
                 
                 if resposta_texto.lower() == "atendimento humano":
@@ -812,22 +811,17 @@ def gerar_resposta(request, mensagem, remetente):
                         "numero": session_id,  # Número de destino (formato internacional)
                         "mensagem": resposta_texto
                     }
-                    response = requests.post(url, json=payload)
-                    print("Status:", response.status_code)
-                    print("Resposta:", response.json())                      
+                    response = requests.post(url, json=payload)                    
                     return redirect('chatbot')
                 
         mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
         print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
-        #return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
-        #resposta = f"Olá {remetente}, recebi sua mensagem: {resposta_texto}"
+
         payload = {
-            "numero": session_id,  # Número de destino (formato internacional)
+            "numero": session_id, 
             "mensagem": resposta_texto
         }
         response = requests.post(url, json=payload)
-        print("Status:", response.status_code)
-        print("Resposta:", response.json())  
         resposta = resposta_texto
 
     #resposta = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
@@ -836,8 +830,6 @@ def gerar_resposta(request, mensagem, remetente):
         "mensagem": resposta_texto
     }
     response = requests.post(url, json=payload)
-    print("Status:", response.status_code)
-    print("Resposta:", response.json())  
     resposta = resposta_texto
     return resposta
 
@@ -849,7 +841,6 @@ def webhook_twilio(request):
     try:
         # Detecta tipo de conteúdo
         if request.content_type == "application/json":
-            print("📥 Recebendo dados como JSON (API)")
             data = json.loads(request.body.decode("utf-8"))
             mensagem = data.get("Body")
             remetente = data.get("From")
@@ -857,7 +848,6 @@ def webhook_twilio(request):
             media_url = data.get("MediaUrl0")
             media_type = data.get("MediaContentType0")
         else:
-            print("📥 Recebendo dados como x-www-form-urlencoded (Twilio WhatsApp)")
             mensagem = request.POST.get("Body")
             remetente = request.POST.get("From")
             num_media = int(request.POST.get("NumMedia", 0))
@@ -869,17 +859,13 @@ def webhook_twilio(request):
 
         # Se houver mídia de áudio, processa
         if num_media > 0 and media_type and "audio" in media_type:
-            print(f"🎤 Áudio recebido de {remetente}. Tipo: {media_type}")
-
             extensao = media_type.split("/")[-1]  # ex: "ogg"
             uid = uuid.uuid4().hex
             input_path = f"/tmp/audio_input_{uid}.{extensao}"
             output_path = f"/tmp/audio_convertido_{uid}.mp3"
 
-            print(f"📥 Baixando áudio de {media_url} como {input_path}")
             audio_response = requests.get(media_url, auth=(ACCOUNT_SID, AUTH_TOKEN))  # ajuste a autenticação se necessário
             if audio_response.status_code != 200:
-                print("❌ Falha ao baixar o áudio")
                 print(f"❌ Falha ao baixar o áudio: {audio_response.status_code} - {audio_response.text}")
                 return HttpResponse("Falha ao baixar mídia", status=400)
 
@@ -894,7 +880,6 @@ def webhook_twilio(request):
                     stderr=subprocess.PIPE,
                     check=True
                 )
-                print(f"✅ Conversão concluída: {output_path}")
             except subprocess.CalledProcessError as e:
                 print("❌ Erro ao converter áudio com ffmpeg.")
                 print(e.stderr.decode())  # Mostra o erro do ffmpeg
@@ -922,7 +907,6 @@ def webhook_twilio(request):
             return HttpResponse("Nenhuma mensagem ou mídia processável", status=400)
 
         # ✅ Processa texto (ou transcrição de voz)
-        print(f"✅ Mensagem final de {remetente}: {mensagem}")
         gerar_resposta(request, mensagem, remetente)
 
         resposta_texto = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
@@ -933,8 +917,6 @@ def webhook_twilio(request):
     <Message>{resposta_segura}</Message>
 </Response>"""
 
-        print("✅ Respondendo com XML:")
-        print(response_xml)
         return HttpResponse(response_xml, content_type="application/xml")
 
     except Exception as e:
