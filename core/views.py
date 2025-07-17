@@ -870,7 +870,10 @@ def webhook_twilio(request):
             
             # Baixa o áudio
             audio_response = requests.get(media_url)
-            filename = "/tmp/audio_mensagem.ogg"
+            extensao = media_type.split("/")[-1]  # por exemplo, "ogg" ou "webm"
+            print(f"📥 Baixando áudio de {media_url} com extensão {extensao}")
+            filename = f"/tmp/audio_mensagem.{extensao}"
+            #filename = "/tmp/audio_mensagem.ogg"
             with open(filename, "wb") as f:
                 f.write(audio_response.content)
 
