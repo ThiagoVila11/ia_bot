@@ -877,7 +877,7 @@ def webhook_twilio(request):
             output_path = f"/tmp/audio_convertido_{uid}.mp3"
 
             print(f"📥 Baixando áudio de {media_url} como {input_path}")
-            audio_response = requests.get(media_url, auth=("ACxxxxxxxxxxxxxxxxx", "SEU_AUTH_TOKEN"))  # ajuste a autenticação se necessário
+            audio_response = requests.get(media_url, auth=(ACCOUNT_SID, AUTH_TOKEN))  # ajuste a autenticação se necessário
             if audio_response.status_code != 200:
                 print("❌ Falha ao baixar o áudio")
                 print(f"❌ Falha ao baixar o áudio: {audio_response.status_code} - {audio_response.text}")
