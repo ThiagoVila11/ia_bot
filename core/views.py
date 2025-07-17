@@ -724,7 +724,7 @@ def gerar_resposta(request, mensagem, remetente):
                     nome=request.session.get('nome_usuario'),
                     email=request.session.get('email_usuario')
                 )       
-                print('Lead criado com sucesso! + Nome:', request.session.get('nome_usuario'), 'Email:', request.session.get('email_usuario'))  
+                print(f"Lead criado com sucesso! Sessão: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")  
             else:
                 try:
                     vector_dir = "vector_index"
