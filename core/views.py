@@ -670,9 +670,11 @@ def gerar_resposta(request, mensagem, remetente):
             nrmsg = Mensagem.objects.filter(session_id=session_id).count()
             
             if cliente_messages == 2:
+                print(f"Atualizando nome do usuário: {texto_usuario}")
                 Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
                 request.session['nome_usuario'] = texto_usuario  # 🔹 salva na sessão
             elif cliente_messages == 3:
+                print(f"Atualizando email do usuário: {texto_usuario}")
                 Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
                 request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
 
@@ -720,10 +722,10 @@ def gerar_resposta(request, mensagem, remetente):
                 }
                 response = requests.post(url, json=payload)
                 #grava o lead
+                print(f"Criar Lead: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")
                 lead.objects.create(
-                    session_id=session_id,
-                    nome=request.session.get('nome_usuario'),
-                    email=request.session.get('email_usuario')
+                    leadNome=request.session.get('nome_usuario'),
+                    leadEmail=request.session.get('email_usuario')
                 )       
                 print(f"Lead criado com sucesso! Sessão: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")  
             else:
