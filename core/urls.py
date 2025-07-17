@@ -35,6 +35,7 @@ urlpatterns = [
     path('contextos/<int:id>/excluir/', views.contexto_excluir, name='contexto_excluir'),
     # Consultor URLs
     path('consultores/', views.listar_consultor, name='listar_consultor'),
+    path('consultores/adicionar/', views.adicionar_consultor, name='adicionar_consultor'),
     #funções do chatbot
     path('inatividade/', views.mensagem_inatividade, name='mensagem_inatividade'),
     #twilio urls
@@ -42,4 +43,5 @@ urlpatterns = [
     path('enviar-mensagem/', views.enviar_mensagem, name='enviar-mensagem'),
     #leads urls
     path('leads/', views.listar_leads, name='listar_leads'),
+    path('leads/adicionar/', views.adicionar_lead, name='adicionar_lead'),
 ] 

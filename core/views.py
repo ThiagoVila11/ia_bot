@@ -21,7 +21,7 @@ from openai import OpenAI
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Parametro, Contexto, Consultor, lead
-from .forms import ParametroForm, MensagemForm, ContextoForm
+from .forms import ParametroForm, MensagemForm, ContextoForm, leadForm, ConsultorForm
 from django.db.models import Max, Sum
 from django.contrib import messages
 from django.utils import timezone
@@ -560,18 +560,28 @@ def listar_consultor(request):
 
 def adicionar_consultor(request):
     if request.method == 'POST':
-        form = ParametroForm(request.POST)
+        form = ConsultorForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('listar_parametros')
+            return redirect('listar_consultor')
     else:
-        form = ParametroForm()
-    return render(request, 'parametros/form.html', {'form': form, 'titulo': 'Adicionar Parâmetro'})
+        form = ConsultorForm()
+    return render(request, 'consultor/form.html', {'form': form, 'titulo': 'Adicionar Consultor'})
 
 # Leads CRUD
 def listar_leads(request):
     leads = lead.objects.all()
-    return render(request, 'lead/listar.html', {'parametros': leads})
+    return render(request, 'lead/listar.html', {'leads': leads})
+
+def adicionar_lead(request):
+    if request.method == 'POST':
+        form = leadForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_leads')
+    else:
+        form = leadForm()
+    return render(request, 'lead/form.html', {'form': form, 'titulo': 'Adicionar Lead'})
 
 def mensagem_inatividade(request):
     print("Iniciando mensagem_inatividade...")
@@ -723,10 +733,17 @@ def gerar_resposta(request, mensagem, remetente):
                 response = requests.post(url, json=payload)
                 #grava o lead
                 print(f"Criar Lead: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")
-                lead.objects.create(
-                    leadNome=request.session.get('nome_usuario'),
-                    leadEmail=request.session.get('email_usuario')
-                )       
+                nome = request.session.get('nome_usuario')
+                email = request.session.get('email_usuario')
+                try:
+                    # criação do lead
+                    lead.objects.create(
+                        leadNome=nome,
+                        leadEmail=email
+                    )
+                    print("✅ Lead criado!")
+                except Exception as e:
+                    print(f"❌ Erro ao criar lead: {e}")     
                 print(f"Lead criado com sucesso! Sessão: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")  
             else:
                 try:

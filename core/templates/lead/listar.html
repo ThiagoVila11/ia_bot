@@ -4,7 +4,7 @@
 <div class="max-w-4xl mx-auto p-6 bg-white shadow rounded">
     <div class="flex justify-between mb-4">
         <h2 class="text-2xl font-bold">Leads</h2>
-        <a href="{% url 'adicionar_parametro' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Adicionar</a>
+        <a href="{% url 'adicionar_lead' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Adicionar</a>
     </div>
     <table class="w-full table-auto">
         <thead class="bg-gray-100">
@@ -16,29 +16,39 @@
                 <th class="px-4 py-2">Ativo</th>
                 <th class="px-4 py-2">Consultor</th>
                 <th class="px-4 py-2">Integrado</th>
+                <th class="px-4 py-2">Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for l in leads %}
             <tr class="border-t">
-                <td class="px-4 py-2 font-mono">{{l.leadNome }}</td>
+                <td class="px-4 py-2 font-mono">{{ l.leadNome }}</td>
                 <td class="px-4 py-2">{{ l.leadEmail }}</td>
                 <td class="px-4 py-2">{{ l.leadTelefone }}</td>
-                <td class="px-4 py-2">{{ l.leadDataHoraCriacao }}</td>
-                <td class="px-4 py-2">{{ l.leadAtivo }}</td>
+                <td class="px-4 py-2">
+                    {{ l.leadDataHoraCriacao|date:"d/m/Y H:i" }}
+                </td>
+                <td class="px-4 py-2">
+                    {% if l.leadAtivo %}Sim{% else %}Não{% endif %}
+                </td>
                 <td class="px-4 py-2">{{ l.leadConsultor }}</td>
-                <td class="px-4 py-2">{{ l.leadIntegrado }}</td>
+                <td class="px-4 py-2">
+                    {% if l.leadIntegrado %}Sim{% else %}Não{% endif %}
+                </td>
                 <td class="px-4 py-2 space-x-2">
-                    <a href="{% url 'alterar_parametro' p.pk %}" class="text-blue-600 hover:underline">Editar</a>
-                    <a href="{% url 'excluir_parametro' p.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                    {% if l.pk %}
+                        <a href="{% url 'alterar_parametro' l.pk %}" class="text-blue-600 hover:underline">Editar</a>
+                        <a href="{% url 'excluir_parametro' l.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3" class="text-center text-gray-500 py-4">Nenhum Lead encontrado.</td>
+                <td colspan="8" class="text-center text-gray-500 py-4">Nenhum Lead encontrado.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endblock %}
+

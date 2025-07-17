@@ -1,5 +1,5 @@
 from django import forms
-from .models import Parametro, Mensagem, Contexto
+from .models import Parametro, Mensagem, Contexto, lead, Consultor
 
 class ParametroForm(forms.ModelForm):
     class Meta:
@@ -24,4 +24,22 @@ class ContextoForm(forms.ModelForm):
         widgets = {
             'contextoConteudo': forms.Textarea(attrs={'rows': 15}),
             'contextoAtual': forms.CheckboxInput(),
+        }
+
+class leadForm(forms.ModelForm):
+    class Meta:
+        model = lead
+        fields = ['leadNome', 'leadEmail', 'leadTelefone', 'leadAtivo',  
+                  'leadConsultor', 'leadIntegrado']
+        widgets = {
+            'leadAtivo': forms.CheckboxInput(),
+            'leadIntegrado': forms.CheckboxInput(),
+        }
+
+class ConsultorForm(forms.ModelForm):
+    class Meta:
+        model = Consultor
+        fields = ['consultorNome', 'consultorEmail', 'consultorTelefone', 'consultorAtivo']
+        widgets = {
+            'consultorAtivo': forms.CheckboxInput(),
         }
