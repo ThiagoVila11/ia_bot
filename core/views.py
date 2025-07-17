@@ -711,7 +711,13 @@ def gerar_resposta(request, mensagem, remetente):
                 }
                 response = requests.post(url, json=payload)
                 print("Status:", response.status_code)
-                print("Resposta:", response.json())            
+                print("Resposta:", response.json()) 
+                #grava o lead
+                lead.objects.create(
+                    session_id=session_id,
+                    nome=request.session.get('nome_usuario'),
+                    email=request.session.get('email_usuario')
+                )           
             else:
                 try:
                     vector_dir = "vector_index"
@@ -760,7 +766,7 @@ def gerar_resposta(request, mensagem, remetente):
                             messages=historico,
                             temperature=0.9,
                             #top_p=0.9,
-                            max_tokens=250,
+                            max_tokens=700,
                             #frequency_penalty=0.3,
                             #presence_penalty=0.2
                         )
@@ -835,6 +841,16 @@ def gerar_resposta(request, mensagem, remetente):
 # core/views.py
 import xml.sax.saxutils as saxutils
 
+import os
+import json
+import requests
+import xml.sax.saxutils as saxutils
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from openai import OpenAI
+
+client = OpenAI(api_key="SUA_CHAVE_OPENAI")
+
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
@@ -847,20 +863,53 @@ def webhook_twilio(request):
             data = json.loads(request.body.decode("utf-8"))
             mensagem = data.get("Body")
             remetente = data.get("From")
+            num_media = int(data.get("NumMedia", 0))
+            media_url = data.get("MediaUrl0")
+            media_type = data.get("MediaContentType0")
         else:
             print("📥 Recebendo dados como x-www-form-urlencoded (Twilio WhatsApp)")
             mensagem = request.POST.get("Body")
             remetente = request.POST.get("From")
+            num_media = int(request.POST.get("NumMedia", 0))
+            media_url = request.POST.get("MediaUrl0")
+            media_type = request.POST.get("MediaContentType0")
 
-        if not mensagem or not remetente:
-            return HttpResponse("Dados incompletos", status=400)
+        if not remetente:
+            return HttpResponse("Remetente não identificado", status=400)
 
-        print(f"✅ Mensagem recebida de {remetente}: {mensagem}")
+        # Se houver mídia (áudio), processar como voz
+        if num_media > 0 and media_type and "audio" in media_type:
+            print(f"🎤 Áudio recebido de {remetente}. Tipo: {media_type}")
+            
+            # Baixa o áudio
+            audio_response = requests.get(media_url)
+            filename = "/tmp/audio_mensagem.ogg"
+            with open(filename, "wb") as f:
+                f.write(audio_response.content)
 
-        # Mensagem de resposta
+            # Transcreve com Whisper
+            with open(filename, "rb") as audio_file:
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    response_format="text"
+                )
+
+            mensagem = transcription.strip()
+            print(f"📝 Transcrição de {remetente}: {mensagem}")
+
+        elif not mensagem:
+            return HttpResponse("Nenhuma mensagem ou mídia processável", status=400)
+
+        # Processa normalmente a mensagem (texto ou transcrição de áudio)
+        print(f"✅ Mensagem final de {remetente}: {mensagem}")
+
+        # Aqui você chama sua função de processamento:
         gerar_resposta(request, mensagem, remetente)
+
+        # Resposta padrão
         resposta_texto = f"Olá {remetente}, recebi sua mensagem: {mensagem}"
-        resposta_segura = saxutils.escape(resposta_texto)  # Escapa XML
+        resposta_segura = saxutils.escape(resposta_texto)
 
         response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -874,4 +923,5 @@ def webhook_twilio(request):
     except Exception as e:
         print(f"❌ Erro no webhook: {str(e)}")
         return HttpResponse("Erro interno no servidor", status=500)
+
 
