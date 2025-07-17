@@ -636,6 +636,8 @@ def gerar_resposta(request, mensagem, remetente):
     print("Gerando resposta para a mensagem...")
     print(f"Mensagem recebida: {mensagem}")
     print(f"Remetente: {remetente}")
+    print(f"email_usuario: {request.session.get('email_usuario')}")
+    print(f"nome_usuario: {request.session.get('nome_usuario')}")
     
     url = "https://inloco.vila11.com.br/enviar-mensagem/"
     session_id = remetente.replace("whatsapp:", "")
