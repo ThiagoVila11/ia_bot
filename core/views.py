@@ -693,6 +693,7 @@ def gerar_resposta(request, mensagem, remetente):
                     "numero": session_id,  # Número de destino (formato internacional)
                     "mensagem": resposta_texto
                 }
+                print(payload)
                 response = requests.post(url, json=payload)
                 print("Status:", response.status_code)
                 print("Resposta:", response.json())
