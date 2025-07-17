@@ -900,18 +900,18 @@ def webhook_twilio(request):
                 print(e.stderr.decode())  # Mostra o erro do ffmpeg
                 return HttpResponse("Erro ao converter áudio", status=500)
 
-            # 🔑 Transcrição com Whisper
-            openai.api_key = get_openai_key()
-            print(f"🔐 Chave OpenAI: {openai.api_key[:5]}...")
+            # Inicializa cliente OpenAI com chave da função get_openai_key()
+            client = OpenAI(api_key=get_openai_key())
+            print(f"🔐 Chave OpenAI usada: {get_openai_key()[:5]}...")
 
             with open(output_path, "rb") as audio_file:
-                transcription = openai.Audio.transcribe(
+                transcription_response = client.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
-                    response_format="text"
+                    response_format="text",
                 )
 
-            mensagem = transcription.strip()
+            mensagem = transcription_response.strip()
             print(f"📝 Transcrição de voz: {mensagem}")
 
             # Limpeza
