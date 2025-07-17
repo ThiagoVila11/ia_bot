@@ -25,7 +25,7 @@ from django.utils import timezone
 from twilio.rest import Client
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
-
+import xml.sax.saxutils as saxutils
 
 
 def get_openai_key():
@@ -839,18 +839,7 @@ def gerar_resposta(request, mensagem, remetente):
     return resposta
 
 # core/views.py
-import xml.sax.saxutils as saxutils
-
-import os
-import json
-import requests
-import xml.sax.saxutils as saxutils
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from openai import OpenAI
-
-client = OpenAI(api_key="SUA_CHAVE_OPENAI")
-
+client = get_openai_key()
 @csrf_exempt
 def webhook_twilio(request):
     if request.method != "POST":
