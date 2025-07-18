@@ -27,8 +27,8 @@
                         {{ c.consultorAtivo|yesno:'Ativo,Inativo' }}
                     </span>
                 <td class="px-4 py-2 space-x-2">
-                    <a href="{% url 'alterar_parametro' c.pk %}" class="text-blue-600 hover:underline">Editar</a>
-                    <a href="{% url 'excluir_parametro' c.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                    <a href="{% url 'alterar_consultor' c.pk %}" class="text-blue-600 hover:underline">Editar</a>
+                    <a href="{% url 'excluir_consultor' c.pk %}" class="text-red-600 hover:underline">Excluir</a>
                 </td>
             </tr>
             {% empty %}

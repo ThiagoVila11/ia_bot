@@ -44,7 +44,7 @@ class Consultor(models.Model):
     consultorAtivo = models.BooleanField(verbose_name='Ativo', default=True)
 
     def __str__(self):
-        return self.nome
+        return self.consultorNome
 
     class Meta:
         verbose_name = "Consultor"

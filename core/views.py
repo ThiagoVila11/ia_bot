@@ -29,6 +29,7 @@ from twilio.rest import Client
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
 import xml.sax.saxutils as saxutils
+from django.urls import reverse
 
 
 def get_openai_key():
@@ -567,6 +568,30 @@ def adicionar_consultor(request):
     else:
         form = ConsultorForm()
     return render(request, 'consultor/form.html', {'form': form, 'titulo': 'Adicionar Consultor'})
+
+def alterar_consultor(request, pk):
+    consultor = get_object_or_404(Consultor, pk=pk)
+    if request.method == 'POST':
+        form = ConsultorForm(request.POST, instance=consultor)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_consultor')
+    else:
+        form = ConsultorForm(instance=consultor)
+    return render(request, 'consultor/form.html', {'form': form, 'titulo': 'Alterar Consultor'})
+
+def excluir_consultor(request, pk):
+    consultor = get_object_or_404(Consultor, pk=pk)
+
+    if request.method == 'POST':
+        consultor.delete()
+        return redirect('listar_consultor')  # ou qualquer outra URL
+
+    return render(request, 'confirmar_exclusao.html', 
+                  {'objeto': consultor, 
+                   'voltar_url': reverse('listar_consultor')
+                   })
+
 
 # Leads CRUD
 def listar_leads(request):
