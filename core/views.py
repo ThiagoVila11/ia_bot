@@ -926,7 +926,7 @@ def webhook_twilio(request):
                 with open(caminho_local, "rb") as image_file:
                     image_bytes = image_file.read()
                     analysis = client.chat.completions.create(
-                        model="gpt-4-vision-preview",
+                        model="gpt-4o",
                         messages=[
                             {
                                 "role": "system",
