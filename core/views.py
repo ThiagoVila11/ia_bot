@@ -909,7 +909,7 @@ def webhook_twilio(request):
             print(f"🌐 URL: {media_url}")
 
             # Baixa a imagem com autenticação
-            img_response = requests.get(media_url, auth=(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN")))
+            img_response = requests.get(media_url, auth=(ACCOUNT_SID, AUTH_TOKEN))
             if img_response.status_code == 200:
                 extensao = media_type.split("/")[-1]
                 uid = uuid.uuid4().hex
