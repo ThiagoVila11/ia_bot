@@ -5,6 +5,7 @@ import requests
 import uuid
 import subprocess
 import openai
+import base64
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -923,24 +924,28 @@ def webhook_twilio(request):
 
                 # 🧠 Análise com GPT-4o
                 with open(caminho_local, "rb") as image_file:
+                    image_bytes = image_file.read()
                     analysis = client.chat.completions.create(
-                        model="gpt-4o",
+                        model="gpt-4-vision-preview",
                         messages=[
                             {
                                 "role": "system",
-                                "content": f""""você é um moderador. Analise a imagem e se ela for imprópria apenas responda 'Imprópria' - Não sendo imprópria classifique como documento, contas de consumo, imagens de pessoas ou outras imagens"""
+                                "content": "Você é um moderador de conteúdo. Analise a imagem e diga se ela contém conteúdo impróprio ou ofensivo.",
                             },
                             {
                                 "role": "user",
                                 "content": [
-                                    {"type": "text", "text": "Esta imagem contém conteúdo impróprio, violento, explícito ou sensível? Responda apenas com 'sim' ou 'não'."},
-                                    {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{img_response.content.encode('base64').decode()}"}}
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                             "url": f"data:{media_type};base64,{base64.b64encode(image_bytes).decode()}"
+                                        }
+                                    }
                                 ]
                             }
                         ],
-                        max_tokens=10,
-                        temperature=0.2
-                    )
+                        max_tokens=100
+                        )
 
                 resposta_gpt = analysis.choices[0].message.content.strip().lower()
                 print(f"🔎 Resposta GPT: {resposta_gpt}")
