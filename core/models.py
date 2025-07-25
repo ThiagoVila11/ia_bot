@@ -79,3 +79,15 @@ class lead(models.Model):
     class Meta:
         verbose_name = "Lead"
         verbose_name_plural = "Leads"
+
+class Unidade(models.Model):
+    UnidadeNome = models.CharField(verbose_name='Unidade', max_length=100)
+    UnidadeEndereco = models.CharField(verbose_name='Endereço', max_length=200)
+    UnidadeAtiva = models.BooleanField(verbose_name='Ativo', default=True)
+
+    def __str__(self):
+        return self.UnidadeNome
+    
+    class Meta:
+        verbose_name = "Unidade"
+        verbose_name_plural = "Unidades"

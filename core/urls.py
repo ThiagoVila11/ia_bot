@@ -1,11 +1,24 @@
-from django.urls import path
+from django.urls import path, include
 from .views import responder_pergunta, chatbot, limpar_historico, parametro_list, parametro_create, parametro_update, parametro_delete
 from . import views
+from django.contrib import admin
+from .views import *
+from rest_framework.routers import DefaultRouter
+
+
+router = DefaultRouter()
+router.register(r'unidades', UnidadeViewSet)
+router.register(r'leads', leadViewSet)
+router.register(r'consultores', ConsultorViewSet)
+router.register(r'parametros', ParametroViewSet)
+router.register(r'contextos', ContextoViewSet)
+router.register(r'mensagens', MensagemViewSet)
 
 urlpatterns = [
     path('blip-ia/', responder_pergunta),
     path('', chatbot, name='chatbot'),  # essa linha define a raiz "/"
     path('limpar-historico/', limpar_historico, name='limpar_historico'),
+    path('', include(router.urls)),  # isso expande as rotas do ViewSet
     # Parâmetro URLs
     path('parametros/', views.parametro_list, name='parametro_list'),
     path('parametros/novo/', views.parametro_create, name='parametro_create'),

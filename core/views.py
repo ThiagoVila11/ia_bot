@@ -20,8 +20,9 @@ from .models import Mensagem
 from openai import OpenAI
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Parametro, Contexto, Consultor, lead
+from .models import Parametro, Contexto, Consultor, lead, Unidade
 from .forms import ParametroForm, MensagemForm, ContextoForm, leadForm, ConsultorForm
+from .serializers import *
 from django.db.models import Max, Sum
 from django.contrib import messages
 from django.utils import timezone
@@ -30,6 +31,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 import xml.sax.saxutils as saxutils
 from django.urls import reverse
+from rest_framework import viewsets
 
 
 def get_openai_key():
@@ -678,14 +680,6 @@ def gerar_resposta(request, mensagem, remetente):
     session_id = remetente.replace("whatsapp:", "")
 
     print(f"ID da sessão atual: {session_id}")
-    # Aqui você pode colocar chamada à OpenAI, regras ou qualquer lógica
-    #if request.session.get('session_id') is None:
-    #        #request.session.save()
-    #        request.session['session_id'] = remetente #request.session.session_key
-    #        print("Sessão criada e ID salvo na sessão.")
-    #        
-    #        session_id = request.session.get('session_id')  #request.session.session_key
-    #        print(f"ID da sessão atual: {session_id}")
 
     if request.session.get('email_usuario') is None:
         request.session['email_usuario'] = "nao@informado.com.br"
@@ -905,6 +899,25 @@ def webhook_twilio(request):
         if not remetente:
             return HttpResponse("Remetente não identificado", status=400)
 
+        # 📷 Se for imagem
+        if num_media > 0 and media_type and media_type.startswith("image/"):
+            print(f"🖼️ Imagem recebida de {remetente}")
+            print(f"📎 Tipo: {media_type}")
+            print(f"🌐 URL: {media_url}")
+
+            # (opcional) Baixa a imagem
+            img_response = requests.get(media_url, auth=(ACCOUNT_SID, AUTH_TOKEN))
+            if img_response.status_code == 200:
+                extensao = media_type.split("/")[-1]
+                nome_arquivo = f"/img/imagem_recebida_{uuid.uuid4().hex}.{extensao}"
+                with open(nome_arquivo, "wb") as f:
+                    f.write(img_response.content)
+                print(f"💾 Imagem salva como {nome_arquivo}")
+            else:
+                print("❌ Erro ao baixar a imagem")
+
+            mensagem = f"Imagem recebida: {media_type}"
+
         # Se houver mídia de áudio, processa
         if num_media > 0 and media_type and "audio" in media_type:
             extensao = media_type.split("/")[-1]  # ex: "ogg"
@@ -970,3 +983,28 @@ def webhook_twilio(request):
     except Exception as e:
         print(f"❌ Erro no webhook: {str(e)}")
         return HttpResponse("Erro interno no servidor", status=500)
+
+#API´s
+class UnidadeViewSet(viewsets.ModelViewSet):
+    queryset = Unidade.objects.all()
+    serializer_class = UnidadeSerializer
+
+class leadViewSet(viewsets.ModelViewSet):
+    queryset = lead.objects.all()
+    serializer_class = leadSerializer
+
+class ConsultorViewSet(viewsets.ModelViewSet):
+    queryset = Consultor.objects.all()
+    serializer_class = ConsultorSerializer
+
+class ParametroViewSet(viewsets.ModelViewSet):
+    queryset = Parametro.objects.all()
+    serializer_class = ParametroSerializer
+
+class ContextoViewSet(viewsets.ModelViewSet):
+    queryset = Contexto.objects.all()
+    serializer_class = ContextoSerializer
+
+class MensagemViewSet(viewsets.ModelViewSet):
+    queryset = Mensagem.objects.all()
+    serializer_class = MensagemSerializer
