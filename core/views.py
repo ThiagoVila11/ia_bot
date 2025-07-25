@@ -930,7 +930,7 @@ def webhook_twilio(request):
                         messages=[
                             {
                                 "role": "system",
-                                "content": "Você é um moderador de conteúdo. Analise a imagem e diga se ela contém conteúdo impróprio ou ofensivo.",
+                                "content": """analise a imagem e se ela for imprópria apenas responda "Imprópria" - Não sendo imprópria classifique como documento, contas de consumo, imagens de pessoas ou outras imagens.""",
                             },
                             {
                                 "role": "user",
