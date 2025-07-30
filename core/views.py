@@ -227,7 +227,7 @@ def chatbot(request):
                             messages=historico,
                             temperature=0.9,
                             #top_p=0.9,
-                            max_tokens=700,
+                            max_tokens=300,
                             #frequency_penalty=0.3,
                             #presence_penalty=0.2
                         )

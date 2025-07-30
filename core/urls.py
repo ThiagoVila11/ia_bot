@@ -7,12 +7,12 @@ from rest_framework.routers import DefaultRouter
 
 
 router = DefaultRouter()
-router.register(r'unidades', UnidadeViewSet)
-router.register(r'leads', leadViewSet)
-router.register(r'consultores', ConsultorViewSet)
-router.register(r'parametros', ParametroViewSet)
-router.register(r'contextos', ContextoViewSet)
-router.register(r'mensagens', MensagemViewSet)
+router.register(r'unidade', UnidadeViewSet)
+router.register(r'lead', leadViewSet)
+router.register(r'consultor', ConsultorViewSet)
+router.register(r'parametro', ParametroViewSet)
+router.register(r'contexto', ContextoViewSet)
+router.register(r'mensagem', MensagemViewSet)
 
 urlpatterns = [
     path('blip-ia/', responder_pergunta),
