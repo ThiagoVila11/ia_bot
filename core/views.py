@@ -217,7 +217,7 @@ def chatbot(request):
                             model="gpt-4",
                             messages=historico,
                             temperature=0.9,
-                            max_tokens=300
+                            max_tokens=700
                         )
                         resposta_texto = response.choices[0].message.content
                         prompt_tokens = response.usage.prompt_tokens
