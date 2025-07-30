@@ -120,82 +120,75 @@ def responder_pergunta(request):
     except Exception as e:
         return JsonResponse({"erro": str(e)}, status=500)
     
-
 def chatbot(request):
-
     if request.session.get('session_id') is None:
         request.session.save()
         request.session['session_id'] = request.session.session_key
         print("Sessão criada e ID salvo na sessão.")
 
-    #if not request.session.session_key:
-    #    request.session.save()  # garante que a sessão seja criada
-    #    request.session['session_id'] = request.session.session_key
-        
-    session_id = request.session.get('session_id')  #request.session.session_key
+    session_id = request.session.get('session_id')
+    print(f"esta é a rotina")
     print(f"ID da sessão atual: {session_id}")
 
-
-    if request.session.get('email_usuario') is None:
-        request.session['email_usuario'] = "nao@informado.com.br"
-
-    if request.session.get('nome_usuario') is None:
-        request.session['nome_usuario'] = "Usuário Anônimo"
+    request.session.setdefault('email_usuario', "nao@informado.com.br")
+    request.session.setdefault('nome_usuario', "Usuário Anônimo")
 
     if request.method == 'POST':
-        #print("Recebendo mensagem do usuário...")
         texto_usuario = request.POST.get('mensagem')
         if texto_usuario:
-            Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-            idmensagem = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).last().id
-            print(f"Mensagem do usuário recebida: {texto_usuario} (ID: {idmensagem})")
-            cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
-            nrmsg = Mensagem.objects.filter(session_id=session_id).count()
-            #print(f"Número de mensagens totais: {nrmsg} + {texto_usuario}")
+            Mensagem.objects.create(session_id=session_id, texto=texto_usuario, enviado_por_usuario=True,
+                                    nome=request.session['nome_usuario'], email=request.session['email_usuario'])
             
+            cliente_messages = Mensagem.objects.filter(session_id=session_id, enviado_por_usuario=True).count()
+
+            # Atualiza nome e email nas etapas 2 e 3
             if cliente_messages == 2:
-                #mensagem = Mensagem.objects.get(id=idmensagem)
-                #mensagem.nome = texto_usuario
-                #mensagem.save()
+                request.session['nome_usuario'] = texto_usuario
                 Mensagem.objects.filter(session_id=session_id).update(nome=texto_usuario)
-                request.session['nome_usuario'] = texto_usuario  # 🔹 salva na sessão
             elif cliente_messages == 3:
-                #mensagem = Mensagem.objects.get(id=idmensagem)
-                #mensagem.email = texto_usuario
-                #mensagem.save()
+                request.session['email_usuario'] = texto_usuario
                 Mensagem.objects.filter(session_id=session_id).update(email=texto_usuario)
-                request.session['email_usuario'] = texto_usuario  # 🔹 salva na sessão
 
+            total_msgs = Mensagem.objects.filter(session_id=session_id).count()
 
-            print(f"Número de mensagens cliente: {cliente_messages} + {texto_usuario}")
-                
-            if Mensagem.objects.filter(session_id=session_id).count() == 1:
-                Mensagem.objects.create(session_id=session_id, texto="Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                Mensagem.objects.create(session_id=session_id, texto="🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                Mensagem.objects.create(session_id=session_id, texto="Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                Mensagem.objects.create(session_id=session_id, texto="Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                Mensagem.objects.create(session_id=session_id, texto="Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-            elif Mensagem.objects.filter(session_id=session_id).count() == 7:
-                Mensagem.objects.create(session_id=session_id, texto="E qual é o seu e-mail para que possamos continuar?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-            elif Mensagem.objects.filter(session_id=session_id).count() == 9:
-                Mensagem.objects.create(session_id=session_id, texto="Perfeito! Agora, como posso te ajudar hoje?", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
+            if total_msgs == 1:
+                respostas = [
+                    "Olá, sou a Vivi da Vila 11. Seja muito bem vindo(a).",
+                    "🔒 Ao prosseguir, você estará de acordo com os nossos Termos de Uso e nossa Política de Privacidade.",
+                    "Garantimos que seus dados estão seguros e sendo utilizados apenas para fins relacionados ao atendimento.",
+                    "Para mais detalhes, acesse: https://vila11.com.br/politica-de-privacidade/",
+                    "Para seguirmos com seu cadastro em nosso sistema, por favor, poderia me falar seu nome e sobrenome?"
+                ]
+                for texto in respostas:
+                    Mensagem.objects.create(session_id=session_id, texto=texto, enviado_por_usuario=False,
+                                            nome=request.session['nome_usuario'], email=request.session['email_usuario'])
+            elif total_msgs == 7:
+                texto = "E qual é o seu e-mail para que possamos continuar?"
+                Mensagem.objects.create(session_id=session_id, texto=texto, enviado_por_usuario=False,
+                                        nome=request.session['nome_usuario'], email=request.session['email_usuario'])
+            elif total_msgs == 9:
+                texto = "Perfeito! Agora, como posso te ajudar hoje?"
+                Mensagem.objects.create(session_id=session_id, texto=texto, enviado_por_usuario=False,
+                                        nome=request.session['nome_usuario'], email=request.session['email_usuario'])
+
+                try:
+                    lead.objects.create(
+                        leadNome=request.session['nome_usuario'],
+                        leadEmail=request.session['email_usuario']
+                    )
+                    print("✅ Lead criado!")
+                except Exception as e:
+                    print(f"❌ Erro ao criar lead: {e}")
             else:
                 try:
                     vector_dir = "vector_index"
                     if not os.path.exists(os.path.join(vector_dir, "index.faiss")):
                         resposta_texto = "Erro: índice de conhecimento não encontrado."
                     else:
-                        #busca contexto no banco de dados
-                        contexto_escrito = Contexto.objects.filter(contextoAtual=True).first()
-
-                        #print("Carregando embeddings e índice FAISS...")
+                        contexto_escrito = Contexto.objects.filter(contextoAtual=True).first().contextoConteudo
                         openai_key = get_openai_key()
                         embeddings = OpenAIEmbeddings(openai_api_key=openai_key)
-                        db = FAISS.load_local(
-                            vector_dir,
-                            embeddings,
-                            allow_dangerous_deserialization=True
-                        )
+                        db = FAISS.load_local(vector_dir, embeddings, allow_dangerous_deserialization=True)
                         docs = db.similarity_search(texto_usuario, k=8)
                         contexto = "\n\n".join([doc.page_content for doc in docs])
 
@@ -204,64 +197,56 @@ def chatbot(request):
                                         Conteúdo base:
                                         {contexto}
                                         """)
-                        print(f"Contexto usado: {contexto_escrito}")
+                        with open("system_prompt_debug.txt", "w", encoding="utf-8") as f:
+                            f.write(system_prompt)
+
                         client = OpenAI(api_key=openai_key)
 
-                        # Histórico da sessão atual
-                        mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
                         historico = [{"role": "system", "content": system_prompt}]
+                        mensagens_anteriores = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
 
-                        # Trunca para as últimas 15 interações (opcional)
                         for msg in list(mensagens_anteriores)[-3:]:
                             historico.append({
                                 "role": "user" if msg.enviado_por_usuario else "assistant",
                                 "content": msg.texto
                             })
 
-                        # Nova mensagem
                         historico.append({"role": "user", "content": texto_usuario})
 
-                        # Envio para OpenAI
                         response = client.chat.completions.create(
                             model="gpt-4",
                             messages=historico,
                             temperature=0.9,
-                            #top_p=0.9,
-                            max_tokens=300,
-                            #frequency_penalty=0.3,
-                            #presence_penalty=0.2
+                            max_tokens=300
                         )
                         resposta_texto = response.choices[0].message.content
-                        # Recupera uso de tokens
                         prompt_tokens = response.usage.prompt_tokens
                         completion_tokens = response.usage.completion_tokens
                         total_tokens = response.usage.total_tokens
+                        total_cost = (prompt_tokens * 0.001 + completion_tokens * 0.015) / 1000
 
-                        # Calcula custo estimado (valores em dólar para gpt-4 em julho/2025)
-                        # Para gpt-4-turbo use $0.01 e $0.03
-                        prompt_cost = prompt_tokens * 0.001 / 1000
-                        completion_cost = completion_tokens * 0.015 / 1000
-                        total_cost = prompt_cost + completion_cost
-
+                        Mensagem.objects.create(
+                            session_id=session_id,
+                            texto=resposta_texto,
+                            enviado_por_usuario=False,
+                            nome=request.session['nome_usuario'],
+                            email=request.session['email_usuario'],
+                            prompt_tokens=prompt_tokens,
+                            completion_tokens=completion_tokens,
+                            total_tokens=total_tokens,
+                            custo_estimado=total_cost
+                        )
                 except Exception as e:
                     resposta_texto = f"Erro ao gerar resposta: {str(e)}"
+                    Mensagem.objects.create(
+                        session_id=session_id,
+                        texto=resposta_texto,
+                        enviado_por_usuario=False,
+                        nome=request.session['nome_usuario'],
+                        email=request.session['email_usuario']
+                    )
 
-                Mensagem.objects.create(session_id=session_id, texto=resposta_texto, 
-                                        enviado_por_usuario=False, nome=request.session.get('nome_usuario'),
-                                         email=request.session.get('email_usuario'),
-                                         prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
-                                         total_tokens=total_tokens, custo_estimado=total_cost)
-                
-                if resposta_texto.lower() in ["encerrar conversa", "sair", "finalizar"]:
-                    Mensagem.objects.create(session_id=session_id, texto="Conversa encerrada. Até logo!", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                    return redirect('chatbot')
-                
-                if resposta_texto.lower() == "atendimento humano":
-                    Mensagem.objects.create(session_id=session_id, texto="Encaminhando para atendimento humano...", enviado_por_usuario=False, nome=request.session.get('nome_usuario'), email=request.session.get('email_usuario'))
-                    return redirect('chatbot')
-                
     mensagens = Mensagem.objects.filter(session_id=session_id).order_by('timestamp')
-    print(f"Número de mensagens na sessão {session_id}: {mensagens.count()}")
     return render(request, 'chat/chatbot.html', {'mensagens': mensagens})
 
 

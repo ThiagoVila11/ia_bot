@@ -14,7 +14,7 @@ django.setup()
 # 3. Agora pode importar modelos e bibliotecas
 from core.models import Parametro
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import TextLoader, DirectoryLoader
+from langchain_community.document_loaders import TextLoader, DirectoryLoader, CSVLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 
@@ -26,14 +26,26 @@ except Parametro.DoesNotExist:
 
 print(f"🔑 Chave OpenAI: {openai_key}")
 
-# 5. Carrega arquivos
-loader = DirectoryLoader(
+# Carregar arquivos .txt
+loader_txt = DirectoryLoader(
     path="meus_arquivos",
     glob="**/*.txt",
     loader_cls=TextLoader,
     loader_kwargs={'encoding': 'utf-8'}
 )
-documents = loader.load()
+docs_txt = loader_txt.load()
+
+# Carregar arquivos .csv
+loader_csv = DirectoryLoader(
+    path="meus_arquivos",
+    glob="**/*.csv",
+    loader_cls=CSVLoader,
+    loader_kwargs={"encoding": "utf-8"}
+)
+docs_csv = loader_csv.load()
+
+# Juntar todos os documentos
+documents = docs_txt + docs_csv
 
 # 6. Split
 splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
