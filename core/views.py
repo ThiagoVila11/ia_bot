@@ -746,9 +746,9 @@ def gerar_resposta(request, mensagem, remetente):
                         leadNome=nome,
                         leadEmail=email
                     )
-                    print("✅ Lead criado!")
+                    print("Lead criado!")
                 except Exception as e:
-                    print(f"❌ Erro ao criar lead: {e}")     
+                    print(f"Erro ao criar lead: {e}")     
                 print(f"Lead criado com sucesso! Sessão: {session_id}  Nome: {request.session.get('nome_usuario')} Email: {request.session.get('email_usuario')}")  
             else:
                 try:
@@ -905,7 +905,7 @@ def webhook_twilio(request):
                 with open(caminho_local, "wb") as f:
                     f.write(img_response.content)
 
-                print(f"💾 Imagem salva em: {caminho_local}")
+                print(f"Imagem salva em: {caminho_local}")
 
                 # 🧠 Análise com GPT-4o
                 with open(caminho_local, "rb") as image_file:
@@ -933,7 +933,7 @@ def webhook_twilio(request):
                         )
 
                 resposta_gpt = analysis.choices[0].message.content.strip().lower()
-                print(f"🔎 Resposta GPT: {resposta_gpt}")
+                print(f"Resposta GPT: {resposta_gpt}")
 
                 if "sim" in resposta_gpt:
                     mensagem = "⚠️ A imagem enviada foi identificada como potencialmente imprópria."
